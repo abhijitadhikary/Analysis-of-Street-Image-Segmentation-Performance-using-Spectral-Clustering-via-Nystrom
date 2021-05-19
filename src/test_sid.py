@@ -175,9 +175,12 @@ def get_k_eig_vectors_nystrom(image_array):
 
     V = V[:, 1:args['num_eigen_vectors'] + 1]
     # reordering V appropriately
+    all_idx = list(np.arange(args['num_elements_flat']))
+    rem_idx = [idx for idx in all_idx if idx not in rand_index_1]
     top_matrix = np.zeros((args['num_elements_flat'], args['num_eigen_vectors']))
     top_matrix[list(rand_index_1), :] = V[:dim_low, :]
-    return V
+    top_matrix[rem_idx, :] = V[dim_low:, :]
+    return top_matrix
 
 
 def get_segmented_image(image, clustered_image, clustered_labels):
