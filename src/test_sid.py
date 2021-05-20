@@ -61,7 +61,7 @@ args = {
     'num_dimensions': 0,
     'num_elements_flat': 0,
     'use_numpy_eigen_decompose': True,
-    'dim_low': 10
+    'dim_low': 100
 }
 
 height, width = img.shape
@@ -122,8 +122,8 @@ def get_eucledian_distance_vectorized(point_1, point_2_array):
     return euclidean_distance
 
 def get_color_weight_vectorized(point_1, point_2_array, sigma_color):
-    point_1 = point_1.reshape(-1, 1)
-    point_2_array = point_2_array.reshape(-1, 1)
+    point_1 = point_1.reshape(-1, point_2_array.shape[1])
+    point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
     difference_color = get_eucledian_distance_vectorized(point_1, point_2_array)
     color_weight = get_exponential_bump(difference_color, sigma_color)
     return color_weight
