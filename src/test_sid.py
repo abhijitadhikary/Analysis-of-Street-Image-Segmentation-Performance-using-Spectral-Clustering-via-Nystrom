@@ -56,7 +56,7 @@ args = {
     'num_dimensions': 0,
     'num_elements_flat': 0,
     'use_numpy_eigen_decompose': True,
-    'dim_low': 10
+    'dim_low': 100
 }
 
 height, width = img.shape
