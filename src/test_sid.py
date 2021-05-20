@@ -61,7 +61,7 @@ args = {
     'num_dimensions': 0,
     'num_elements_flat': 0,
     'use_numpy_eigen_decompose': True,
-    'dim_low': 50
+    'dim_low': 10
 }
 
 height, width = img.shape
@@ -100,26 +100,38 @@ def get_exponential_bump(distance, sigma=1):
     return exponential_bump
 
 
-def get_exponential_bump(distance, sigma=1):
-    exponential_bump = np.exp(-np.abs(distance) / sigma ** 2)
-    return exponential_bump
+# def get_eucledian_distance(point_1, point_2):
+#     euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2), 2)))
+#     return euclidean_distance
+#
+#
+# def get_color_weight(point_1, point_2, sigma_color):
+#     difference_color = get_eucledian_distance(point_1, point_2)
+#     color_weight = get_exponential_bump(difference_color, sigma_color)
+#     return color_weight
+#
+# def get_distance_weight(index_row_1, index_col_1, index_row_2, index_col_2, sigma_distance):
+#     point_1 = np.array([index_row_1, index_col_1])
+#     point_2 = np.array([index_row_2, index_col_2])
+#     distance = get_eucledian_distance(point_1, point_2)
+#     distance_weight = get_exponential_bump(distance, sigma_distance)
+#     return distance_weight
 
-
-def get_eucledian_distance(point_1, point_2):
-    euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2), 2)))
+def get_eucledian_distance_vectorized(point_1, point_2_array):
+    euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
     return euclidean_distance
 
-
-def get_color_weight(point_1, point_2, sigma_color):
-    difference_color = get_eucledian_distance(point_1, point_2)
+def get_color_weight_vectorized(point_1, point_2_array, sigma_color):
+    point_1 = point_1.reshape(-1, 1)
+    point_2_array = point_2_array.reshape(-1, 1)
+    difference_color = get_eucledian_distance_vectorized(point_1, point_2_array)
     color_weight = get_exponential_bump(difference_color, sigma_color)
     return color_weight
 
-
-def get_distance_weight(index_row_1, index_col_1, index_row_2, index_col_2, sigma_distance):
-    point_1 = np.array([index_row_1, index_col_1])
-    point_2 = np.array([index_row_2, index_col_2])
-    distance = get_eucledian_distance(point_1, point_2)
+def get_distance_weight_vectorized(point_1, point_2_array, sigma_distance):
+    point_1 = point_1.reshape(-1, point_2_array.shape[1])
+    point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
+    distance = get_eucledian_distance_vectorized(point_1, point_2_array)
     distance_weight = get_exponential_bump(distance, sigma_distance)
     return distance_weight
 
@@ -128,26 +140,18 @@ def get_k_eig_vectors_nystrom(image_array):
     dim_low = args['dim_low']
     weight_matrix = np.zeros((dim_low, args['num_elements_flat']))
 
-    rand_index_1 = np.random.choice(args['num_elements_flat'], size=dim_low, replace=False)
-    # using Nystrom
-    for idx in tqdm(range(dim_low)):
-        index_1 = rand_index_1[idx]
-        for index_2 in range(args['num_elements_flat']):
-            if index_1 == index_2:
-                weight_matrix[idx, index_2] = 1
-                continue
-            point_1 = image_array[index_1]
-            point_2 = image_array[index_2]
+    indices_low = np.random.choice(args['num_elements_flat'], size=dim_low, replace=False)
+    image_low = image_array[indices_low]
 
-            weight_color = get_color_weight(point_1[:args['num_channels']], point_2[:args['num_channels']],
-                                            args['sigma_color'])
-            weight_distance = get_distance_weight(point_1[-2], point_1[-1], point_2[-2], point_2[-1],
-                                                  args['sigma_distance'])
+    for index_1 in range(len(image_low)):
+        point_1 = image_low[index_1]
+        weight_color = get_color_weight_vectorized(point_1[:args['num_channels']], image_array[:, :args['num_channels']], args['sigma_color'])
+        weight_distance = get_distance_weight_vectorized(point_1[-2:], image_array[:, -2:], args['sigma_distance'])
+        weight_matrix[index_1] = weight_color * weight_distance
+        weight_matrix[index_1, index_1] = 1
 
-            weight_matrix[idx, index_2] = weight_color * weight_distance
-
-    A = weight_matrix[:, list(rand_index_1)]  # nxn
-    B = np.delete(weight_matrix, list(rand_index_1), axis=1)  # nxm
+    A = weight_matrix[:, list(indices_low)]  # nxn
+    B = np.delete(weight_matrix, list(indices_low), axis=1)  # nxm
     n, m = B.shape
     #     print(A.shape)
     #     print(B.shape)
@@ -176,9 +180,9 @@ def get_k_eig_vectors_nystrom(image_array):
     V = V[:, 1:args['num_eigen_vectors'] + 1]
     # reordering V appropriately
     all_idx = list(np.arange(args['num_elements_flat']))
-    rem_idx = [idx for idx in all_idx if idx not in rand_index_1]
+    rem_idx = [idx for idx in all_idx if idx not in indices_low]
     top_matrix = np.zeros((args['num_elements_flat'], args['num_eigen_vectors']))
-    top_matrix[list(rand_index_1), :] = V[:dim_low, :]
+    top_matrix[list(indices_low), :] = V[:dim_low, :]
     top_matrix[rem_idx, :] = V[dim_low:, :]
     return top_matrix
 
