@@ -44,6 +44,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.cluster import KMeans
+import os
 
 args = {
     'num_clusters': 3,
@@ -66,6 +67,15 @@ args['width'] = width
 args['num_channels'] = num_channels
 args['num_elements_flat'] = height * width
 args['num_dimensions'] = num_channels + 2
+
+
+def get_file_names(root=os.path.join('..', 'data')):
+    filenames = []
+    for root, _, files in os.walk(root):
+        for f in files:
+            filename = os.path.join(root, f)
+            filenames.append(filename)
+    return filenames
 
 
 def imshow(image, title=''):
@@ -182,19 +192,35 @@ def get_k_eig_vectors_nystrom(image_array):
     return top_matrix
 
 
-def get_segmented_image(image, clustered_image, clustered_labels):
+def get_segmented_image(image, clustered_image, clustered_labels, use_median=False):
     label_values = np.unique(clustered_labels)
     segmented_image = np.zeros_like(image)
-    # factor = 255 / (np.max(image) - np.min(image))
-    for index in label_values:
-        current_mask = (clustered_image == index).astype(np.uint8)
-        factor = (index+1) * (255/len(label_values))
-        current_segment = factor * image * current_mask
-        # cluster_total = np.count_nonzero(current_segment)
-        # cluster_sum = np.sum(current_segment)
-        # cluster_mean = cluster_sum / cluster_total
-        current_segment = np.where(current_segment > 0, factor, current_segment)
-        segmented_image += current_segment.astype(np.uint8)
+
+    if use_median:
+        factor = 255 / (np.max(image) - np.min(image))
+        for index in label_values:
+            current_mask = (clustered_image == index).astype(np.uint8)
+            current_segment = factor * image * current_mask
+
+            cluster_total = np.count_nonzero(current_segment)
+            #cluster_sum = np.sum(current_segment)
+            #cluster_mean = cluster_sum / cluster_total
+            non_zero_current_segment = current_segment[current_segment != 0]
+            cluster_center = non_zero_current_segment[cluster_total//2]
+            current_segment = np.where(current_segment > 0, cluster_center, current_segment)
+            segmented_image += current_segment.astype(np.uint8)
+
+    else:
+        # factor = 255 / (np.max(image) - np.min(image))
+        for index in label_values:
+            current_mask = (clustered_image == index).astype(np.uint8)
+            factor = (index+1) * (255/len(label_values))
+            current_segment = factor * image * current_mask
+            # cluster_total = np.count_nonzero(current_segment)
+            # cluster_sum = np.sum(current_segment)
+            # cluster_mean = cluster_sum / cluster_total
+            current_segment = np.where(current_segment > 0, factor, current_segment)
+            segmented_image += current_segment.astype(np.uint8)
 
     return segmented_image
 
