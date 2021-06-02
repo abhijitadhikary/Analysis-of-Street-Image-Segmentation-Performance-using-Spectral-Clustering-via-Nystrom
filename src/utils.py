@@ -164,9 +164,9 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
 
                 if use_median:
                     ################################
-                    non_zero_current_segment = current_segment[current_segment != 0]
-                    cluster_center = non_zero_current_segment[cluster_total // 2]
-                    current_segment = np.where(current_segment > 0, cluster_center, current_segment)
+                    non_zero_current_channel = np.sort(current_channel[current_channel != 0]) # Sort values to find median
+                    cluster_median = non_zero_current_channel[cluster_total // 2]  # Median of non-0 elements
+                    current_segment[:, :, channel_index] = np.where(current_channel > 0, cluster_median, current_channel)
                     ################################
                 else:
                     cluster_sum = np.sum(current_channel)
