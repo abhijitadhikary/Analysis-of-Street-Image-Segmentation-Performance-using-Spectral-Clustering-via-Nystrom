@@ -1,11 +1,6 @@
-from tqdm import tqdm
-from scipy.linalg import sqrtm
 import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-from sklearn.cluster import KMeans
-from sklearn.feature_extraction import image
-from sklearn.cluster import spectral_clustering
+from time import time
+
 
 l = 100
 x, y = np.indices((l, l))
@@ -24,24 +19,24 @@ circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4 ** 2
 
 # #############################################################################
 # 4 circles
-# img = circle1 + circle2 + circle3 + circle4
-#
-# # We use a mask that limits to the foreground: the problem that we are
-# # interested in here is not separating the objects from the background,
-# # but separating them one from the other.
-# mask = img.astype(bool)
-#
-# img = img.astype(float)
-# img += 1 + 0.2 * np.random.randn(*img.shape)
+img = circle1 + circle2 + circle3 + circle4
+
+# We use a mask that limits to the foreground: the problem that we are
+# interested in here is not separating the objects from the background,
+# but separating them one from the other.
+mask = img.astype(bool)
+
+img = img.astype(float)
+img += 1 + 0.2 * np.random.randn(*img.shape)
 
 
 # #############################################################################
 # 2 circles
-img = circle1 + circle2
-mask = img.astype(bool)
-img = img.astype(float)
-
-img += 1 + 0.2 * np.random.randn(*img.shape)
+# img = circle1 + circle2
+# mask = img.astype(bool)
+# img = img.astype(float)
+#
+# img += 1 + 0.2 * np.random.randn(*img.shape)
 
 from tqdm import tqdm
 from scipy.linalg import sqrtm
@@ -49,11 +44,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.cluster import KMeans
+import os
 
 args = {
     'num_clusters': 3,
     'num_eigen_vectors': 3,
-    'sigma_color': 0.4,
+    'sigma_color': 0.5,
     'sigma_distance': 5,
     'height': 100,
     'width': 100,
@@ -71,6 +67,15 @@ args['width'] = width
 args['num_channels'] = num_channels
 args['num_elements_flat'] = height * width
 args['num_dimensions'] = num_channels + 2
+
+
+def get_file_names(root=os.path.join('..', 'data')):
+    filenames = []
+    for root, _, files in os.walk(root):
+        for f in files:
+            filename = os.path.join(root, f)
+            filenames.append(filename)
+    return filenames
 
 
 def imshow(image, title=''):
@@ -142,13 +147,17 @@ def get_k_eig_vectors_nystrom(image_array):
 
     indices_low = np.random.choice(args['num_elements_flat'], size=dim_low, replace=False)
     image_low = image_array[indices_low]
-
-    for index_1 in range(len(image_low)):
-        point_1 = image_low[index_1]
-        weight_color = get_color_weight_vectorized(point_1[:args['num_channels']], image_array[:, :args['num_channels']], args['sigma_color'])
-        weight_distance = get_distance_weight_vectorized(point_1[-2:], image_array[:, -2:], args['sigma_distance'])
-        weight_matrix[index_1] = weight_color * weight_distance
-        weight_matrix[index_1, index_1] = 1
+    distances_colour = np.linalg.norm(np.expand_dims(image_array[:,:args['num_channels']], axis=1) - image_low[:,:args['num_channels']], axis=-1, ord=2)
+    distances_position = np.linalg.norm(np.expand_dims(image_array[:,args['num_channels']:], axis=1) - image_low[:,args['num_channels']:], axis=-1, ord=2)
+    weight_matrix = (get_exponential_bump(distances_colour,args['sigma_color'])*get_exponential_bump(distances_position,args['sigma_distance'])).T
+    row = [i for i in range(dim_low)]
+    weight_matrix[row, row] = 1
+    # for index_1 in range(len(image_low)):
+    #     point_1 = image_low[index_1]
+    #     weight_color = get_color_weight_vectorized(point_1[:args['num_channels']], image_array[:, :args['num_channels']], args['sigma_color'])
+    #     weight_distance = get_distance_weight_vectorized(point_1[-2:], image_array[:, -2:], args['sigma_distance'])
+    #     weight_matrix[index_1] = weight_color * weight_distance
+    #     weight_matrix[index_1, index_1] = 1
 
     A = weight_matrix[:, list(indices_low)]  # nxn
     B = np.delete(weight_matrix, list(indices_low), axis=1)  # nxm
@@ -158,11 +167,7 @@ def get_k_eig_vectors_nystrom(image_array):
     A_pinv = np.linalg.pinv(A)
     d1 = np.sum(np.vstack((A, B.T)), axis=0).reshape(1, -1)
     d2 = np.sum(B, axis=0) + (np.sum(B.T, axis=0).reshape(1, -1) @ (A_pinv @ B))
-    print(d1.shape)
-    print(d2.shape)
     dhat = np.sqrt(1 / np.hstack((d1, d2))).reshape(-1, 1)
-    print(dhat.shape)
-    print(np.count_nonzero(np.argwhere(d2 < 0)))
     A = A * (dhat[:n].reshape(-1, 1) @ dhat[:n].reshape(-1, 1).T)
     B = B * (dhat[:n].reshape(-1, 1) @ dhat[n:].reshape(-1, 1).T)
 
@@ -187,27 +192,48 @@ def get_k_eig_vectors_nystrom(image_array):
     return top_matrix
 
 
-def get_segmented_image(image, clustered_image, clustered_labels):
+def get_segmented_image(image, clustered_image, clustered_labels, use_median=False):
     label_values = np.unique(clustered_labels)
     segmented_image = np.zeros_like(image)
-    factor = 255 / (np.max(image) - np.min(image))
-    for index in label_values:
-        current_mask = (clustered_image == index).astype(np.uint8)
-        current_segment = factor * image * current_mask
 
-        cluster_total = np.count_nonzero(current_segment)
-        cluster_sum = np.sum(current_segment)
-        cluster_mean = cluster_sum / cluster_total
-        current_segment = np.where(current_segment > 0, cluster_mean, current_segment)
-        segmented_image += current_segment.astype(np.uint8)
+    if use_median:
+        factor = 255 / (np.max(image) - np.min(image))
+        for index in label_values:
+            current_mask = (clustered_image == index).astype(np.uint8)
+            current_segment = factor * image * current_mask
+
+            cluster_total = np.count_nonzero(current_segment)
+            #cluster_sum = np.sum(current_segment)
+            #cluster_mean = cluster_sum / cluster_total
+            non_zero_current_segment = current_segment[current_segment != 0]
+            cluster_center = non_zero_current_segment[cluster_total//2]
+            current_segment = np.where(current_segment > 0, cluster_center, current_segment)
+            segmented_image += current_segment.astype(np.uint8)
+
+    else:
+        # factor = 255 / (np.max(image) - np.min(image))
+        for index in label_values:
+            current_mask = (clustered_image == index).astype(np.uint8)
+            factor = (index+1) * (255/len(label_values))
+            current_segment = factor * image * current_mask
+            # cluster_total = np.count_nonzero(current_segment)
+            # cluster_sum = np.sum(current_segment)
+            # cluster_mean = cluster_sum / cluster_total
+            current_segment = np.where(current_segment > 0, factor, current_segment)
+            segmented_image += current_segment.astype(np.uint8)
 
     return segmented_image
 
 
 image_array = get_image_array(img)
+start = time()
 eigen_vecs_k = get_k_eig_vectors_nystrom(image_array)
+end = time()
+print('Run time', end-start)
 print(eigen_vecs_k.shape)
-
+# imshow(eigen_vecs_k[:,0].reshape(args['height'], args['width']), '1st')
+# imshow(eigen_vecs_k[:,1].reshape(args['height'], args['width']), '2nd')
+# imshow(eigen_vecs_k[:,2].reshape(args['height'], args['width']), '3rd')
 kmeans = KMeans(n_clusters=args['num_clusters'], random_state=0).fit(eigen_vecs_k)
 clustered_labels = kmeans.labels_
 unique, counts = np.unique(clustered_labels, return_counts=True)
@@ -224,4 +250,3 @@ print(d)
 imshow(img, 'Input Image')
 # imshow(clustered_image, 'Clustered Image')
 imshow(segmented_image, 'segmented_image')
-
