@@ -1,11 +1,5 @@
-from time import time
-from tqdm import tqdm
-from scipy.linalg import sqrtm
 import numpy as np
 import matplotlib.pyplot as plt
-import cv2
-from tqdm import tqdm
-from sklearn.cluster import KMeans
 import os
 import argparse
 
@@ -69,6 +63,29 @@ def imshow(image, title=''):
         plt.imshow(image)
     plt.show()
 
+def process_image_attributes(image, args):
+    '''
+    Update args's parameters corresponding to the image dimension
+    :param image:
+    :param args:
+    :return:
+    '''
+    image_shape = len(image.shape)
+    if image_shape == 3:
+        height, width, num_channels = image.shape
+    elif image_shape == 2:
+        height, width = image.shape
+        num_channels = 1
+    else:
+        raise NotImplementedError('Invalid image format')
+
+    args.height = height
+    args.width = width
+    args.num_channels = num_channels
+    args.num_elements_flat = height * width
+    args.num_dimensions = num_channels + 2
+
+    return args
 
 def get_image_array(image, args):
     '''
@@ -98,54 +115,6 @@ def get_image_array(image, args):
             image_array_index += 1
 
     return image_array
-
-def get_exponential_bump(distance, sigma=1):
-    '''
-    Applies an exponential function to each element of the array with a supplied variance
-    :param distance:
-    :param sigma:
-    :return:
-    '''
-    exponential_bump = np.exp(-np.abs(distance) / sigma ** 2)
-    return exponential_bump
-
-def get_eucledian_distance_vectorized(point_1, point_2_array):
-    '''
-    Returns the Euclidean distance between each row of two arrays
-    :param point_1:
-    :param point_2_array:
-    :return:
-    '''
-    euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
-    return euclidean_distance
-
-def get_color_weight_vectorized(point_1, point_2_array, sigma_color):
-    '''
-    Returns the weight of the color information for calculating the Adjacency martix
-    :param point_1:
-    :param point_2_array:
-    :param sigma_color:
-    :return:
-    '''
-    point_1 = point_1.reshape(-1, point_2_array.shape[1])
-    point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
-    difference_color = get_eucledian_distance_vectorized(point_1, point_2_array)
-    color_weight = get_exponential_bump(difference_color, sigma_color)
-    return color_weight
-
-def get_distance_weight_vectorized(point_1, point_2_array, sigma_distance):
-    '''
-    Returns the weight of the pixel location for calculating the Adjacency martix
-    :param point_1:
-    :param point_2_array:
-    :param sigma_distance:
-    :return:
-    '''
-    point_1 = point_1.reshape(-1, point_2_array.shape[1])
-    point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
-    distance = get_eucledian_distance_vectorized(point_1, point_2_array)
-    distance_weight = get_exponential_bump(distance, sigma_distance)
-    return distance_weight
 
 def get_segmented_image(image, clustered_image, clustered_labels, args, use_median=True):
     '''
