@@ -32,4 +32,6 @@ def run_nystrom(weight_matrix_partial, indices_random_low_dim):
 
     L = np.diag(L)
     V = np.hstack((A, B)).T @ Asi @ U @ np.linalg.pinv(np.sqrt(L))
+    # ignore the comlpex portion if there is any
+    V = np.real(V)
     return V
