@@ -1,14 +1,5 @@
-import numpy as np
-from time import time
-from tqdm import tqdm
-from scipy.linalg import sqrtm
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2
-from tqdm import tqdm
-from sklearn.cluster import KMeans
-import os
 from utils import *
+from nystrom import get_k_eig_vectors_nystrom
 
 args = get_args()
 image = cv2.imread('../notebooks/vegetables.png')

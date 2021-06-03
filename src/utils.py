@@ -10,6 +10,10 @@ import os
 import argparse
 
 def get_args():
+    '''
+    Returns all the hyperparameters
+    :return:
+    '''
     args = argparse.Namespace()
     args.num_clusters = 8
     args.num_eigen_vectors = 8
@@ -25,6 +29,13 @@ def get_args():
     return args
 
 def convert(source, min_value=0, max_value=1):
+    '''
+    Rescales the values of an array between min_value and max_value
+    :param source:
+    :param min_value:
+    :param max_value:
+    :return:
+    '''
     source = np.array(source).astype(np.float64)
     smin = source.min()
     smax = source.max()
@@ -42,6 +53,12 @@ def get_file_names(root=os.path.join('..', 'data')):
     return filenames
 
 def imshow(image, title=''):
+    '''
+    Displays an image using matplotlib
+    :param image:
+    :param title:
+    :return:
+    '''
     image = convert(image, 0, 255).astype(np.uint8)
     plt.figure(figsize=(5, 5))
     plt.title(title)
@@ -54,6 +71,14 @@ def imshow(image, title=''):
 
 
 def get_image_array(image, args):
+    '''
+    Converts an image into a long vector where the first three (or 1: for grayscale)
+    elements of each row are the color intensity information, and the last two are the
+    X and Y coordinates of the pixel
+    :param image:
+    :param args:
+    :return:
+    '''
     image_array = np.zeros((args.num_elements_flat, (args.num_channels + 2)))
 
     image_array_index = 0
@@ -75,14 +100,33 @@ def get_image_array(image, args):
     return image_array
 
 def get_exponential_bump(distance, sigma=1):
+    '''
+    Applies an exponential function to each element of the array with a supplied variance
+    :param distance:
+    :param sigma:
+    :return:
+    '''
     exponential_bump = np.exp(-np.abs(distance) / sigma ** 2)
     return exponential_bump
 
 def get_eucledian_distance_vectorized(point_1, point_2_array):
+    '''
+    Returns the Euclidean distance between each row of two arrays
+    :param point_1:
+    :param point_2_array:
+    :return:
+    '''
     euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
     return euclidean_distance
 
 def get_color_weight_vectorized(point_1, point_2_array, sigma_color):
+    '''
+    Returns the weight of the color information for calculating the Adjacency martix
+    :param point_1:
+    :param point_2_array:
+    :param sigma_color:
+    :return:
+    '''
     point_1 = point_1.reshape(-1, point_2_array.shape[1])
     point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
     difference_color = get_eucledian_distance_vectorized(point_1, point_2_array)
@@ -90,62 +134,30 @@ def get_color_weight_vectorized(point_1, point_2_array, sigma_color):
     return color_weight
 
 def get_distance_weight_vectorized(point_1, point_2_array, sigma_distance):
+    '''
+    Returns the weight of the pixel location for calculating the Adjacency martix
+    :param point_1:
+    :param point_2_array:
+    :param sigma_distance:
+    :return:
+    '''
     point_1 = point_1.reshape(-1, point_2_array.shape[1])
     point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
     distance = get_eucledian_distance_vectorized(point_1, point_2_array)
     distance_weight = get_exponential_bump(distance, sigma_distance)
     return distance_weight
 
-
-def get_k_eig_vectors_nystrom(image_array, args):
-    dim_low = args.dim_low
-
-    indices_low = np.random.choice(args.num_elements_flat, size=dim_low, replace=False)
-    image_low = image_array[indices_low]
-    distances_colour = np.linalg.norm(np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
-    distances_position = np.linalg.norm(np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
-    weight_matrix = (get_exponential_bump(distances_colour, args.sigma_color) * get_exponential_bump(distances_position, args.sigma_distance)).T
-    # weight_matrix = (get_exponential_bump(distances_colour, args.sigma_color)).T
-    row = [i for i in range(dim_low)]
-    weight_matrix[row, row] = 1
-
-    A = weight_matrix[:, list(indices_low)]  # nxn
-    B = np.delete(weight_matrix, list(indices_low), axis=1)  # nxm
-    n, m = B.shape
-    #     print(A.shape)
-    #     print(B.shape)
-    A_pinv = np.linalg.pinv(A)
-    d1 = np.sum(np.vstack((A, B.T)), axis=0).reshape(1, -1)
-    d2 = np.sum(B, axis=0) + (np.sum(B.T, axis=0).reshape(1, -1) @ (A_pinv @ B))
-    dhat = np.sqrt(1 / np.hstack((d1, d2))).reshape(-1, 1)
-    A = A * (dhat[:n].reshape(-1, 1) @ dhat[:n].reshape(-1, 1).T)
-    B = B * (dhat[:n].reshape(-1, 1) @ dhat[n:].reshape(-1, 1).T)
-
-    pinv_A = np.linalg.pinv(A)
-
-    Asi = sqrtm(pinv_A)
-
-    Q = A + Asi @ B @ B.T @ Asi
-    U, L, T = np.linalg.svd(Q)
-
-    L = np.diag(L)
-
-    V = np.hstack((A, B)).T @ Asi @ U @ np.linalg.pinv(np.sqrt(L))
-
-    V = V[:, 1:args.num_eigen_vectors]
-    # reordering V appropriately
-    all_idx = list(np.arange(args.num_elements_flat))
-    rem_idx = [idx for idx in all_idx if idx not in indices_low]
-    top_matrix = np.zeros((args.num_elements_flat, args.num_eigen_vectors-1))
-    top_matrix[list(indices_low), :] = V[:dim_low, :]
-    top_matrix[rem_idx, :] = V[dim_low:, :]
-    return top_matrix
-
 def get_segmented_image(image, clustered_image, clustered_labels, args, use_median=True):
     '''
-        abhi's color
+    Returns a segmented image based on the supplied labels, either using median
+    or mean each cluster
+    :param image:
+    :param clustered_image:
+    :param clustered_labels:
+    :param args:
+    :param use_median:
+    :return:
     '''
-
     if args.num_channels == 3:
         label_values = np.unique(clustered_labels)
         segmented_image = np.zeros_like(image)
@@ -153,7 +165,6 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
             factor = 255 / (np.max(image) - np.min(image))
         else:
             factor = 1
-
         for index in label_values:
             current_mask = (clustered_image == index).astype(np.float64)
             current_segment = image * np.repeat(current_mask[..., None], args.num_channels, axis=2) * factor
@@ -163,18 +174,15 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
                 cluster_total = np.count_nonzero(current_channel)
 
                 if use_median:
-                    ################################
                     non_zero_current_channel = np.sort(current_channel[current_channel != 0]) # Sort values to find median
                     cluster_median = non_zero_current_channel[cluster_total // 2]  # Median of non-0 elements
                     current_segment[:, :, channel_index] = np.where(current_channel > 0, cluster_median, current_channel)
-                    ################################
                 else:
                     cluster_sum = np.sum(current_channel)
                     cluster_mean = cluster_sum / cluster_total
                     current_segment[:, :, channel_index] = np.where(current_segment[:, :, channel_index] > 0,
                                                                     cluster_mean,
                                                                     current_segment[:, :, channel_index])
-
                 segmented_image[:, :, channel_index] += current_segment[:, :, channel_index].astype(np.float64)
 
     elif args.num_channels == 1:
@@ -202,38 +210,6 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
             segmented_image += current_segment.astype(np.float64) #* np.random.rand(1)
 
     return segmented_image
-
-# def get_segmented_image(image, clustered_image, clustered_labels, args, use_median=False):
-#     label_values = np.unique(clustered_labels)
-#     segmented_image = np.zeros_like(image)
-#
-#     if use_median:
-#         factor = 255 / (np.max(image) - np.min(image))
-#         for index in label_values:
-#             current_mask = (clustered_image == index).astype(np.uint8)
-#             current_segment = factor * image * current_mask
-#
-#             cluster_total = np.count_nonzero(current_segment)
-#             #cluster_sum = np.sum(current_segment)
-#             #cluster_mean = cluster_sum / cluster_total
-#             non_zero_current_segment = current_segment[current_segment != 0]
-#             cluster_center = non_zero_current_segment[cluster_total//2]
-#             current_segment = np.where(current_segment > 0, cluster_center, current_segment)
-#             segmented_image += current_segment.astype(np.uint8)
-#
-#     else:
-#         # factor = 255 / (np.max(image) - np.min(image))
-#         for index in label_values:
-#             current_mask = (clustered_image == index).astype(np.uint8)
-#             factor = (index+1) * (255/len(label_values))
-#             current_segment = factor * image * current_mask
-#             # cluster_total = np.count_nonzero(current_segment)
-#             # cluster_sum = np.sum(current_segment)
-#             # cluster_mean = cluster_sum / cluster_total
-#             current_segment = np.where(current_segment > 0, factor, current_segment)
-#             segmented_image += current_segment.astype(np.uint8)
-#
-#     return segmented_image
 
 def get_dummy_image():
     l = 100
