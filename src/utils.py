@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import argparse
 import cv2
+import torch
 
 
 def get_args():
@@ -13,8 +14,8 @@ def get_args():
     args = argparse.Namespace()
     args.num_clusters = 8
     # args.num_clusters = 8
-    args.sigma_color = 0.4 # 0.4
-    args.sigma_distance = 20 # 20
+    args.sigma_color = 0.6 # 0.4
+    args.sigma_distance = 5 # 20
     args.height = 100
     args.width = 100
     args.num_channels = 0
@@ -22,7 +23,7 @@ def get_args():
     args.num_elements_flat = 0
     args.use_numpy_eigen_decompose = True
     args.dim_low = 100
-    args.color_weight_mode = 2 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
+    args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     return args
 
 
@@ -230,3 +231,42 @@ def get_dummy_image():
     image = image.astype(float)
     image += 1 + 0.2 * np.random.randn(*image.shape)
     return image
+
+def get_IOU(ground_truth, predicted):
+    # for channel_index in range(ground_truth.shape[2]):
+    #     unique_values = np.unique(ground_truth[:, :, channel_index])
+    #     intersection = np.logical_and(ground_truth[:, :, channel_index], predicted[:, :, channel_index])
+    #     union = np.logical_or(ground_truth[:, :, channel_index], predicted[:, :, channel_index])
+    #     iou = np.sum(intersection) / np.sum(union)
+    #     print(iou)
+
+    unique_color_values = np.unique(ground_truth.reshape(-1, ground_truth.shape[2]), axis=0)
+
+    return unique_color_values
+
+# def get_IOU(label, pred, num_classes=8):
+#     pred = torch.tensor(pred)
+#     pred = pred.permute(2, 0, 1)
+#     pred = torch.softmax(pred, dim=1)
+#     pred = torch.argmax(pred, dim=1).squeeze(1)
+#     iou_list = list()
+#     present_iou_list = list()
+#
+#     pred = pred.view(-1)
+#     label = torch.tensor(label)
+#     label = label.view(-1)
+#     # Note: Following for loop goes from 0 to (num_classes-1)
+#     # and ignore_index is num_classes, thus ignore_index is
+#     # not considered in computation of IoU.
+#     for sem_class in range(num_classes):
+#         pred_inds = (pred == sem_class)
+#         target_inds = (label == sem_class)
+#         if target_inds.long().sum().item() == 0:
+#             iou_now = float('nan')
+#         else:
+#             intersection_now = (pred_inds[target_inds]).long().sum().item()
+#             union_now = pred_inds.long().sum().item() + target_inds.long().sum().item() - intersection_now
+#             iou_now = float(intersection_now) / float(union_now)
+#             present_iou_list.append(iou_now)
+#         iou_list.append(iou_now)
+#     return np.mean(present_iou_list)

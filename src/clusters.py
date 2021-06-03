@@ -23,4 +23,4 @@ def get_clustered_image(eigen_vectors, args):
     clustered_labels, _ = run_kmeans(eigen_vectors, args)
     clustered_image = clustered_labels.reshape(args.height, args.width)
 
-    return clustered_image, clustered_labels
+    return clustered_image

@@ -156,13 +156,13 @@ def get_random_indices(array, num_indices, replace=False):
     return np.random.choice(array, size=num_indices, replace=replace)
 
 
-def run_spectral_segmentation(image_real, args):
+def run_spectral_clustering(image_real, args):
     '''
     Returns the k (dim_low) smallest eigenvectors after performing spectral clustering
     (Uses Nystrom to efficiently computer the eigenvectors)
     :param scaled_image: The input image of shape [height, width, num_channels]
     :param args: the arguments with the hyper-parameters
-    :return segmented_image: The segmented image of shape [height, width, num_channels]
+    :return clustered_image: The clustered image of shape [height, width, num_channels]
     '''
     # start = time()
     image_scaled, args = process_image_attributes(image_real, args)
@@ -187,11 +187,6 @@ def run_spectral_segmentation(image_real, args):
     print(eigen_vecs_k.shape)
 
     # segment the eigenvectors using
-    clustered_image, clustered_labels = get_clustered_image(eigen_vecs_k, args)
+    clustered_image = get_clustered_image(eigen_vecs_k, args)
 
-    # segment the image according to cluster mean/medians color values
-    segmented_image = get_segmented_image(image_real, clustered_image, clustered_labels, args)
-
-    unique, counts = np.unique(segmented_image[:, :, 0], return_counts=True)
-    print(f'After Segmentation\n{dict(zip(unique, counts))}')
-    return segmented_image
+    return clustered_image
