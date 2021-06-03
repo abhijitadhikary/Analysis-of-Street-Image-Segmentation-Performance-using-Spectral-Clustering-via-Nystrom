@@ -1,4 +1,4 @@
-from kmeans import run_kmeans
+from kmeans import run_kmeans_sklearn
 
 def get_clustered_image(image, args):
     '''
@@ -13,7 +13,7 @@ def get_clustered_image(image, args):
     # ***********************************************************
     # ***********************************************************
 
-    clustered_labels = run_kmeans(image, args)
+    clustered_labels = run_kmeans_sklearn(image, args)
     clustered_image = clustered_labels.reshape(args.height, args.width)
 
     return clustered_image, clustered_labels
