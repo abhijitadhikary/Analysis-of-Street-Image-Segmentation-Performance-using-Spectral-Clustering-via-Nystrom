@@ -4,6 +4,12 @@ import numpy as np
 from utils import convert
 
 def get_image_full_path(dir_path, mode):
+    '''
+    Returns the full path of images/labels of the supplied path
+    :param dir_path:
+    :param mode:
+    :return:
+    '''
     image_full_path_list = []
     if mode == 'label':
         image_full_path_list_inst = []
@@ -28,6 +34,12 @@ def get_image_full_path(dir_path, mode):
         return image_full_path_list
 
 def read_image_as_array(image_path_list_full, is_label):
+    '''
+    Takes a list of path of images as input, returns the images as a numpy array (RGB or grayscale)
+    :param image_path_list_full:
+    :param is_label:
+    :return:
+    '''
     image_list = []
     for image_path_full in image_path_list_full:
         try:
@@ -46,6 +58,11 @@ def read_image_as_array(image_path_list_full, is_label):
     return image_array
 
 def load_data(variant):
+    '''
+    Returns images and labels (if applicable) of train, test and val data
+    :param variant:
+    :return:
+    '''
     dir_path_image = os.path.join('..', 'data', 'idd20k_lite', 'leftImg8bit', variant)
     dir_path_label = os.path.join('..', 'data', 'idd20k_lite', 'gtFine', variant)
 

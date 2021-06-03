@@ -5,14 +5,10 @@ from dataloader import load_data
 
 if __name__ == '__main__':
     args = get_args()
-
-    variant = 'train'
-
-
     # load data
-    image_array_train, label_array_train, label_array_inst_train = load_data('train')
-    image_array_val, label_array_val, label_array_inst_val = load_data('val')
-    image_array_test = load_data('test')
+    image_array_train, label_array_train, label_array_inst_train = load_data(variant='train')
+    image_array_val, label_array_val, label_array_inst_val = load_data(variant='val')
+    image_array_test = load_data(variant='test')
 
     image_index = 100
     image = image_array_val[image_index]
