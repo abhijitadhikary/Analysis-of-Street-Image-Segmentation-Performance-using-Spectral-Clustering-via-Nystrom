@@ -24,12 +24,12 @@ def get_eucledian_distance_vectorized(point_1, point_2_array):
     euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
     return euclidean_distance
 
-def get_color_weight_vectorized(point_1, point_2_array, sigma_color):
+def get_color_weight(image_array, image_low, args):
     '''
     Returns the weight of the color information for calculating the Adjacency martix
-    :param point_1:
-    :param point_2_array:
-    :param sigma_color:
+    :param image_array:
+    :param image_low:
+    :param args:
     :return:
     '''
     # ***********************************************************
@@ -37,13 +37,13 @@ def get_color_weight_vectorized(point_1, point_2_array, sigma_color):
     # EXPERIMENT WITH RGB, HSV and DOOG, experiments section of the paper, page 7
     # ***********************************************************
     # ***********************************************************
-    point_1 = point_1.reshape(-1, point_2_array.shape[1])
-    point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
-    difference_color = get_eucledian_distance_vectorized(point_1, point_2_array)
-    color_weight = get_exponential_bump(difference_color, sigma_color)
+    # 0: RGB, 1: constant(1), 2: HSV, 1: DOOG
+
+    if args.color_weight_mode == 0:
+        color_weight = np.linalg.norm(np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
     return color_weight
 
-def get_distance_weight_vectorized(point_1, point_2_array, sigma_distance):
+def get_distance_weight(image_array, image_low, args):
     '''
     Returns the weight of the pixel location for calculating the Adjacency martix
     :param point_1:
@@ -51,10 +51,7 @@ def get_distance_weight_vectorized(point_1, point_2_array, sigma_distance):
     :param sigma_distance:
     :return:
     '''
-    point_1 = point_1.reshape(-1, point_2_array.shape[1])
-    point_2_array = point_2_array.reshape(-1, point_2_array.shape[1])
-    distance = get_eucledian_distance_vectorized(point_1, point_2_array)
-    distance_weight = get_exponential_bump(distance, sigma_distance)
+    distance_weight = np.linalg.norm(np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
     return distance_weight
 
 def get_weight_martix_partial(image_array, indices_random_low_dim, args):
@@ -66,12 +63,10 @@ def get_weight_martix_partial(image_array, indices_random_low_dim, args):
     :return:
     '''
     image_low = image_array[indices_random_low_dim]
-    distances_colour = np.linalg.norm(
-        np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
-    distances_position = np.linalg.norm(
-        np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
-    weight_matrix = (get_exponential_bump(distances_colour, args.sigma_color) * get_exponential_bump(distances_position,
-                                                                                                     args.sigma_distance)).T
+    color_weight = get_color_weight(image_array, image_low, args)
+    distance_weight = get_distance_weight(image_array, image_low, args)
+    weight_matrix = (get_exponential_bump(color_weight, args.sigma_color)
+                     * get_exponential_bump(distance_weight, args.sigma_distance)).T
     # set the diagonal entries to 0
     row = [i for i in range(args.dim_low)]
     weight_matrix[row, row] = 1

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import argparse
+import cv2
 
 def get_args():
     '''
@@ -20,6 +21,7 @@ def get_args():
     args.num_elements_flat = 0
     args.use_numpy_eigen_decompose = True
     args.dim_low = 100
+    args.color_weight_mode = 0 # 0: RGB, 1: constant(1), 2: HSV, 1: DOOG
     return args
 
 def convert(source, min_value=0, max_value=1):
@@ -85,7 +87,14 @@ def process_image_attributes(image, args):
     args.num_elements_flat = height * width
     args.num_dimensions = num_channels + 2
 
-    return args
+    if args.color_weight_mode == 2:
+        # convert to HSV
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+
+    image = convert(image, min_value=0, max_value=1)
+
+
+    return image, args
 
 def get_image_array(image, args):
     '''
@@ -127,13 +136,14 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
     :param use_median:
     :return:
     '''
+    label_values = np.unique(clustered_labels)
+    segmented_image = np.zeros_like(image)
+    if use_median:
+        factor = 255 / (np.max(image) - np.min(image))
+    else:
+        factor = 1
+
     if args.num_channels == 3:
-        label_values = np.unique(clustered_labels)
-        segmented_image = np.zeros_like(image)
-        if use_median:
-            factor = 255 / (np.max(image) - np.min(image))
-        else:
-            factor = 1
         for index in label_values:
             current_mask = (clustered_image == index).astype(np.float64)
             current_segment = image * np.repeat(current_mask[..., None], args.num_channels, axis=2) * factor
@@ -155,13 +165,6 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
                 segmented_image[:, :, channel_index] += current_segment[:, :, channel_index].astype(np.float64)
 
     elif args.num_channels == 1:
-        label_values = np.unique(clustered_labels)
-        segmented_image = np.zeros_like(image)
-        if use_median:
-            factor = 255 / (np.max(image) - np.min(image))
-        else:
-            factor = 1
-
         for index in label_values:
             current_mask = (clustered_image == index).astype(np.float64)
             current_segment = image * current_mask * factor
