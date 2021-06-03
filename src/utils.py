@@ -12,8 +12,8 @@ def get_args():
     args = argparse.Namespace()
     args.num_clusters = 8
     # args.num_clusters = 8
-    args.sigma_color = 0.4
-    args.sigma_distance = 20
+    args.sigma_color = 0.4 # 0.4
+    args.sigma_distance = 20 # 20
     args.height = 100
     args.width = 100
     args.num_channels = 0
@@ -21,7 +21,7 @@ def get_args():
     args.num_elements_flat = 0
     args.use_numpy_eigen_decompose = True
     args.dim_low = 100
-    args.color_weight_mode = 0 # 0: RGB, 1: constant(1), 2: HSV, 1: DOOG
+    args.color_weight_mode = 2 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     return args
 
 def convert(source, min_value=0, max_value=1):
@@ -48,18 +48,24 @@ def get_file_names(root=os.path.join('..', 'data')):
             filenames.append(filename)
     return filenames
 
-def imshow(image, title=''):
+def imshow(image, args, title=''):
     '''
     Displays an image using matplotlib
     :param image:
     :param title:
     :return:
     '''
+    # rearrange pixel values between 0 and 255 and convert dtype to uint8
     image = convert(image, 0, 255).astype(np.uint8)
+
+    # if input image is hsv format, convert it to rgb
+    if args.color_weight_mode == 2 and args.num_channels == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
+
     plt.figure(figsize=(5, 5))
     plt.title(title)
 
-    if len(image.shape) == 2:
+    if args.num_channels == 1:
         plt.imshow(image, cmap='gray')
     else:
         plt.imshow(image)
@@ -92,8 +98,6 @@ def process_image_attributes(image, args):
         image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
     image = convert(image, min_value=0, max_value=1)
-
-
     return image, args
 
 def get_image_array(image, args):
