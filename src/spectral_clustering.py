@@ -4,6 +4,7 @@ from utils import get_image_array
 from clusters import get_clustered_image
 from utils import get_segmented_image
 
+
 def get_exponential_bump(distance, sigma=1):
     '''
     Applies an exponential function to each element of the array with a supplied variance
@@ -13,6 +14,7 @@ def get_exponential_bump(distance, sigma=1):
     '''
     exponential_bump = np.exp(-np.abs(distance) / sigma ** 2)
     return exponential_bump
+
 
 def get_euclidean_distance(point_1, point_2_array):
     '''
@@ -24,6 +26,7 @@ def get_euclidean_distance(point_1, point_2_array):
     euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
     return euclidean_distance
 
+
 def get_hsv_weights(array):
     h, s, v = array[:, 0].reshape(-1, 1), array[:, 1].reshape(-1, 1), array[:, 2].reshape(-1, 1)
     output = np.hstack((
@@ -32,6 +35,7 @@ def get_hsv_weights(array):
         v * s * np.cos(h),
     ))
     return output
+
 
 def get_color_weight(image_array, image_low, args):
     '''
@@ -50,7 +54,9 @@ def get_color_weight(image_array, image_low, args):
 
     if args.color_weight_mode == 0:
         # intensity distance (RGB)
-        color_weight = np.linalg.norm(np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
+        color_weight = np.linalg.norm(
+            np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1,
+            ord=2)
     elif args.color_weight_mode == 1:
         # not a good idea for images
         color_weight = np.ones((image_array.shape[0], image_low.shape[0])).astype(np.float64)
@@ -59,7 +65,9 @@ def get_color_weight(image_array, image_low, args):
         if args.num_channels == 3:
             image_array = get_hsv_weights(image_array)
             image_low = get_hsv_weights(image_low)
-            color_weight = np.linalg.norm(np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1,  ord=2)
+            color_weight = np.linalg.norm(
+                np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1,
+                ord=2)
         # for grayscale images
         elif args.num_channels == 1:
             raise NotImplementedError('HSV weight mode not implemented for Grayscale images')
@@ -70,6 +78,7 @@ def get_color_weight(image_array, image_low, args):
 
     return color_weight
 
+
 def get_distance_weight(image_array, image_low, args):
     '''
     Returns the weight of the pixel location for calculating the Adjacency martix
@@ -78,8 +87,10 @@ def get_distance_weight(image_array, image_low, args):
     :param sigma_distance:
     :return:
     '''
-    distance_weight = np.linalg.norm(np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
+    distance_weight = np.linalg.norm(
+        np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
     return distance_weight
+
 
 def get_weight_martix_partial(image_array, indices_random_low_dim, args):
     '''
@@ -100,6 +111,7 @@ def get_weight_martix_partial(image_array, indices_random_low_dim, args):
 
     return weight_matrix
 
+
 def get_top_matrix(V, indices_random_low_dim, args):
     '''
         Returns the correctly ordered eigenvectors
@@ -117,12 +129,13 @@ def get_top_matrix(V, indices_random_low_dim, args):
 
     return top_matrix
 
+
 def get_k_smallest_eigen_vectors(eigen_vectors, args):
     '''
     Returns the 1-k smallest eigen vectors of eigen_vectors
     :param eigen_vectors: all the eigenvectors
     :param args: number of eigenvectors needed = number of clusters - 1
-    :return:
+    :return: The 1-k smallest eigen vectors of eigen_vectors
     '''
     # ***********************************************************
     # ***********************************************************
@@ -131,27 +144,28 @@ def get_k_smallest_eigen_vectors(eigen_vectors, args):
     # ***********************************************************
     return eigen_vectors[:, 1:args.num_clusters]
 
+
 def get_random_indices(array, num_indices, replace=False):
     '''
     Returns specified number of random indices (uniform distribution) from the supplied array
     :param array: The range from which the indices are to be chosen
     :param num_indices: The number of random indices chosen
     :param replace: if we want the random points chosen to be repeated or not, default = False
-    :return:
+    :return: array of size [num_indices,]
     '''
     return np.random.choice(array, size=num_indices, replace=replace)
 
-def run_spectral_segmentation(image, args):
+
+def run_spectral_segmentation(scaled_image, image, args):
     '''
     Returns the k (dim_low) smallest eigenvectors after performing spectral clustering
-    (Uses Nystrom to efficiently computer the eivenvectors)
-    :param image_array:
-    :param args:
-    :return:
+    (Uses Nystrom to efficiently computer the eigenvectors)
+    :param scaled_image: The input image of shape [height, width, num_channels]
+    :param args: the arguments with the hyper-parameters
+    :return segmented_image: The segmented image of shape [height, width, num_channels]
     '''
-
     # start = time()
-    image_array = get_image_array(image, args)
+    image_array = get_image_array(scaled_image, args)
     # k (dim_low) random indices for nystrom
     indices_random_low_dim = get_random_indices(args.num_elements_flat, args.dim_low)
 
@@ -177,6 +191,6 @@ def run_spectral_segmentation(image, args):
     # segment the image according to cluster mean/medians color values
     segmented_image = get_segmented_image(image, clustered_image, clustered_labels, args)
 
-    unique, counts = np.unique(clustered_labels, return_counts=True)
+    unique, counts = np.unique(segmented_image[:, :, 0], return_counts=True)
     print(f'After Segmentation\n{dict(zip(unique, counts))}')
     return segmented_image

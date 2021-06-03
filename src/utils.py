@@ -7,7 +7,7 @@ import cv2
 
 def get_args():
     '''
-    Returns all the hyperparameters
+    Returns all the hyper-parameters
     :return args: the hyper-parameters
     '''
     args = argparse.Namespace()
@@ -60,9 +60,9 @@ def imshow(image, args, title=''):
     :return:
     '''
     # rearrange pixel values between 0 and 255 and convert dtype to uint8
-    image = convert(image, 0, 255).astype(np.uint8)
-
-    # if input image is hsv format, convert it to rgb
+    # image = convert(image, 0, 255).astype(np.uint8)
+    image = image.astype(np.uint8)
+    # # if input image is hsv format, convert it to rgb
     if args.color_weight_mode == 2 and args.num_channels == 3:
         image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
 
@@ -147,17 +147,18 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
     :param use_median: Use median value as the cluster intensity or not (False -> mean is used, True -> median is used)
     :return segmented_image:  The segmented image of shape [height, width, num_channels]
     '''
+    if args.color_weight_mode==2:
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    image = image.astype(np.float64)
     label_values = np.unique(clustered_labels)
     segmented_image = np.zeros_like(image)
-    if use_median:
-        factor = 255 / (np.max(image) - np.min(image))
-    else:
-        factor = 1
-
+    # image[:, :, 1:] = convert(image[:, :, 1:], 0, 255)
+    # if args.color_weight_mode==2:
+    #     image[:, :, 0] = convert(image[:, :, 0], 0, 179)
     if args.num_channels == 3:
         for index in label_values:
             current_mask = (clustered_image == index).astype(np.float64)
-            current_segment = image * np.repeat(current_mask[..., None], args.num_channels, axis=2) * factor
+            current_segment = image * np.repeat(current_mask[..., None], args.num_channels, axis=2)
 
             for channel_index in range(args.num_channels):
                 current_channel = current_segment[:, :, channel_index]
@@ -178,7 +179,7 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
     elif args.num_channels == 1:
         for index in label_values:
             current_mask = (clustered_image == index).astype(np.float64)
-            current_segment = image * current_mask * factor
+            current_segment = image * current_mask
 
             current_channel = current_segment
             cluster_total = np.count_nonzero(current_channel)
