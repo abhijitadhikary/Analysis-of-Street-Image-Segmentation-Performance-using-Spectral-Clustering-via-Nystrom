@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.cluster import KMeans
 
-def run_kmeans(eigen_vecs_k, args):
+def run_kmeans_sklearn(eigen_vecs_k, args):
     # ***********************************************************
     # ***********************************************************
     # CHANGE THIS TO A NATIVE PYTHON KMEANS IMPLEMENTATION
