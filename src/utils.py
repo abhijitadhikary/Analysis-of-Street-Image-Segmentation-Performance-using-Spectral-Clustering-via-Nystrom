@@ -1,4 +1,3 @@
-import numpy as np
 from time import time
 from tqdm import tqdm
 from scipy.linalg import sqrtm
@@ -13,7 +12,7 @@ import argparse
 def get_args():
     args = argparse.Namespace()
     args.num_clusters = 8
-    args.num_eigen_vectors = 3
+    args.num_eigen_vectors = 8
     args.sigma_color = 0.4
     args.sigma_distance = 20
     args.height = 100
@@ -133,11 +132,11 @@ def get_k_eig_vectors_nystrom(image_array, args):
 
     V = np.hstack((A, B)).T @ Asi @ U @ np.linalg.pinv(np.sqrt(L))
 
-    V = V[:, 1:args.num_eigen_vectors + 1]
+    V = V[:, 1:args.num_eigen_vectors]
     # reordering V appropriately
     all_idx = list(np.arange(args.num_elements_flat))
     rem_idx = [idx for idx in all_idx if idx not in indices_low]
-    top_matrix = np.zeros((args.num_elements_flat, args.num_eigen_vectors))
+    top_matrix = np.zeros((args.num_elements_flat, args.num_eigen_vectors-1))
     top_matrix[list(indices_low), :] = V[:dim_low, :]
     top_matrix[rem_idx, :] = V[dim_low:, :]
     return top_matrix

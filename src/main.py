@@ -16,7 +16,7 @@ args = {
     'num_channels': 0,
     'num_dimensions': 0,
     'num_elements_flat': 0,
-    'use_numpy_eigen_decompose': True,
+    'use_numpy_eigen_decompose': False,
     'dim_low': 5
 }
 
