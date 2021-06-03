@@ -43,7 +43,7 @@ def get_file_names(root=os.path.join('..', 'data')):
     return filenames
 
 def imshow(image, title=''):
-    convert(image, 0, 255)
+    image = convert(image, 0, 255).astype(np.uint8)
     plt.figure(figsize=(5, 5))
     plt.title(title)
 
