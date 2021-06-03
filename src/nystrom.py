@@ -13,13 +13,16 @@ def run_nystrom(weight_matrix_partial, indices_random_low_dim):
                 The eigenvectors for as approximated by nystorm method
                 Each eigenvector is ordered w.r.t. the indices of the random pixels -> needs reordering
     '''
+    # The sub-matrices inside the full weight matrix
     A = weight_matrix_partial[:, list(indices_random_low_dim)]  # nxn
     B = np.delete(weight_matrix_partial, list(indices_random_low_dim), axis=1)  # nxm
     n, m = B.shape
     A_pinv = np.linalg.pinv(A)
+    # calculation approximate degree matrix from A and B
     d1 = np.sum(np.vstack((A, B.T)), axis=0).reshape(1, -1)
     d2 = np.sum(B, axis=0) + (np.sum(B.T, axis=0).reshape(1, -1) @ (A_pinv @ B))
     dhat = np.sqrt(1 / np.hstack((d1, d2))).reshape(-1, 1)
+    # normalizing A and B
     A = A * (dhat[:n].reshape(-1, 1) @ dhat[:n].reshape(-1, 1).T)
     B = B * (dhat[:n].reshape(-1, 1) @ dhat[n:].reshape(-1, 1).T)
 

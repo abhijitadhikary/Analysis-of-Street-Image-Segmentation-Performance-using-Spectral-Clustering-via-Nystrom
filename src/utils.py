@@ -56,8 +56,8 @@ def get_file_names(root=os.path.join('..', 'data')):
 def imshow(image, args, title=''):
     '''
     Displays an image using matplotlib
-    :param image:
-    :param title:
+    :param image: The image to show ( of shape [height, width, 3]-> colour or [height, width]-> grayscale)
+    :param title: A string. Title to be put as the heading
     :return:
     '''
     # rearrange pixel values between 0 and 255 and convert dtype to uint8
@@ -80,9 +80,10 @@ def imshow(image, args, title=''):
 def process_image_attributes(image, args):
     '''
     Update args's parameters corresponding to the image dimension
-    :param image:
-    :param args:
-    :return:
+    :param image: The input image of shape [height, width, num_channels]
+    :param args: The arguments with all the hyper-parameters
+    :return image: The normalized image of shape [height, width, num_channels]
+            args: Updated arguments with image dimensions
     '''
     image_shape = len(image.shape)
     if image_shape == 3:
@@ -113,9 +114,9 @@ def get_image_array(image, args):
         Converts an image into a long vector where the first three (or 1: for grayscale)
         elements of each row are the color intensity information, and the last two are the
         X and Y coordinates of the pixel
-        :param image:
-        :param args:
-        :return:
+        :param image: The input image of shape [height, width, num_channels]
+        :param args: The arguments with all the hyper-parameters
+        :return image_array: flattened image array of shape [height*width, num_channels + 2]
         '''
     image_array = np.zeros((args.num_elements_flat, (args.num_channels + 2)))
 

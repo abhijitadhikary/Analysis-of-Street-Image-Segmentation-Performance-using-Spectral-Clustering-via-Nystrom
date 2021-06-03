@@ -16,18 +16,24 @@ def get_exponential_bump(distance, sigma=1):
     return exponential_bump
 
 
-def get_euclidean_distance(point_1, point_2_array):
-    '''
-    Returns the Euclidean distance between each row of two arrays
-    :param point_1:
-    :param point_2_array:
-    :return:
-    '''
-    euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
-    return euclidean_distance
+# def get_euclidean_distance(point_1, point_2_array):
+#     '''
+#     Returns the Euclidean distance between each row of two arrays
+#     :param point_1:
+#     :param point_2_array:
+#     :return:
+#     '''
+#     euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
+#     return euclidean_distance
 
 
-def get_hsv_weights(array):
+def get_hsv_encodings(array):
+    '''
+    Applying sinusoidal encoding to the hue value as it is an angle between 0-179
+    :param array: the flattened version of the image with shape [num_pixels, num_channels+2]
+                the first three columns correspond to h,s v respectively
+    :return output: The encoded color space representation [num_pixels, num_channels]
+    '''
     h, s, v = array[:, 0].reshape(-1, 1), array[:, 1].reshape(-1, 1), array[:, 2].reshape(-1, 1)
     output = np.hstack((
         v,
@@ -40,10 +46,14 @@ def get_hsv_weights(array):
 def get_color_weight(image_array, image_low, args):
     '''
     Returns the weight of the color information for calculating the Adjacency martix
-    :param image_array:
-    :param image_low:
-    :param args:
-    :return:
+    :param image_array: np.ndarray of shape [num_elements, num_channels +2]
+                    Vector representation of all the pixels
+                    First num_channels -> color, next 2 are the position
+    :param image_low: np.ndarray of shape [dim_low, 2]
+                    Vector representation the randomly chosen pixels
+                    First num_channels -> color, next 2 are the position
+    :param args: arguments for the hyper-parameters
+    :return color_weight: Distance between the color representation of the two arrays (image_array and image_low)
     '''
     # ***********************************************************
     # ***********************************************************
@@ -63,8 +73,8 @@ def get_color_weight(image_array, image_low, args):
     elif args.color_weight_mode == 2:
         # for color images
         if args.num_channels == 3:
-            image_array = get_hsv_weights(image_array)
-            image_low = get_hsv_weights(image_low)
+            image_array = get_hsv_encodings(image_array)
+            image_low = get_hsv_encodings(image_low)
             color_weight = np.linalg.norm(
                 np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1,
                 ord=2)
@@ -82,10 +92,14 @@ def get_color_weight(image_array, image_low, args):
 def get_distance_weight(image_array, image_low, args):
     '''
     Returns the weight of the pixel location for calculating the Adjacency martix
-    :param point_1:
-    :param point_2_array:
-    :param sigma_distance:
-    :return:
+    :param image_array: np.ndarray of shape [num_elements, num_channels +2]
+                    Vector representation of all the pixels
+                    First num_channels -> color, next 2 are the position
+    :param image_low: np.ndarray of shape [dim_low, 2]
+                    Vector representation the randomly chosen pixels
+                    First num_channels -> color, next 2 are the position
+    :param args: arguments for the hyper-parameters
+    :return distance_weight: Distance between the pixel locations for the two arrays (image_array and image_low)
     '''
     distance_weight = np.linalg.norm(
         np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
@@ -95,17 +109,20 @@ def get_distance_weight(image_array, image_low, args):
 def get_weight_martix_partial(image_array, indices_random_low_dim, args):
     '''
     Returns a dim_low x len(image_array) weight matrix
-    :param image_array:
-    :param indices_random_low_dim:
-    :param args:
-    :return:
+    :param image_array: np.ndarray of shape [num_elements, no_dimensions]
+                       flattened image num_elements = height*width
+    :param indices_random_low_dim:  np.ndarray of shape [low_dim]
+                        the indices of the randomly selected pixels for Nystorm
+    :param args: arguments for hyper-parameters
+    :return weight_matrix: np.ndarray of shape [low_dim, num_elements]
+                        The sub matrix [A B] of the full weight matrix W
     '''
     image_low = image_array[indices_random_low_dim]
     color_weight = get_color_weight(image_array, image_low, args)
     distance_weight = get_distance_weight(image_array, image_low, args)
     weight_matrix = (get_exponential_bump(color_weight, args.sigma_color)
                      * get_exponential_bump(distance_weight, args.sigma_distance)).T
-    # set the diagonal entries to 0
+    # set the diagonal entries to 1, self-similarity = 1
     row = [i for i in range(args.dim_low)]
     weight_matrix[row, row] = 1
 
