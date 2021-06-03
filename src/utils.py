@@ -53,7 +53,7 @@ def get_file_names(root=os.path.join('..', 'data')):
     return filenames
 
 
-def imshow(image, args, title=''):
+def imshow(image, args=None, title=''):
     '''
     Displays an image using matplotlib
     :param image: The image to show ( of shape [height, width, 3]-> colour or [height, width]-> grayscale)
@@ -70,7 +70,7 @@ def imshow(image, args, title=''):
     plt.figure(figsize=(5, 5))
     plt.title(title)
 
-    if args.num_channels == 1:
+    if len(image.shape) == 2:
         plt.imshow(image, cmap='gray')
     else:
         plt.imshow(image)
