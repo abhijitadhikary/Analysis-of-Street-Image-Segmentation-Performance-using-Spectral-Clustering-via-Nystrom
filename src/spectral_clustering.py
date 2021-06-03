@@ -1,6 +1,6 @@
 import numpy as np
 from nystrom import run_nystrom
-from utils import get_image_array
+from utils import get_image_array, process_image_attributes
 from clusters import get_clustered_image
 from utils import get_segmented_image
 
@@ -156,7 +156,7 @@ def get_random_indices(array, num_indices, replace=False):
     return np.random.choice(array, size=num_indices, replace=replace)
 
 
-def run_spectral_segmentation(scaled_image, image, args):
+def run_spectral_segmentation(image_real, args):
     '''
     Returns the k (dim_low) smallest eigenvectors after performing spectral clustering
     (Uses Nystrom to efficiently computer the eigenvectors)
@@ -165,7 +165,8 @@ def run_spectral_segmentation(scaled_image, image, args):
     :return segmented_image: The segmented image of shape [height, width, num_channels]
     '''
     # start = time()
-    image_array = get_image_array(scaled_image, args)
+    image_scaled, args = process_image_attributes(image_real, args)
+    image_array = get_image_array(image_scaled, args)
     # k (dim_low) random indices for nystrom
     indices_random_low_dim = get_random_indices(args.num_elements_flat, args.dim_low)
 
@@ -189,7 +190,7 @@ def run_spectral_segmentation(scaled_image, image, args):
     clustered_image, clustered_labels = get_clustered_image(eigen_vecs_k, args)
 
     # segment the image according to cluster mean/medians color values
-    segmented_image = get_segmented_image(image, clustered_image, clustered_labels, args)
+    segmented_image = get_segmented_image(image_real, clustered_image, clustered_labels, args)
 
     unique, counts = np.unique(segmented_image[:, :, 0], return_counts=True)
     print(f'After Segmentation\n{dict(zip(unique, counts))}')

@@ -63,8 +63,8 @@ def imshow(image, args, title=''):
     # image = convert(image, 0, 255).astype(np.uint8)
     image = image.astype(np.uint8)
     # # if input image is hsv format, convert it to rgb
-    if args.color_weight_mode == 2 and args.num_channels == 3:
-        image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
+    # if args.color_weight_mode == 2 and args.num_channels == 3:
+    #     image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
 
     plt.figure(figsize=(5, 5))
     plt.title(title)
@@ -100,21 +100,22 @@ def process_image_attributes(image, args):
 
     if args.color_weight_mode == 2:
         # convert to HSV
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+        image = cv2.cvtColor(np.copy(image), cv2.COLOR_RGB2HSV)
 
     image = convert(image, min_value=0, max_value=1)
     return image, args
 
 
 def get_image_array(image, args):
+    # noinspection PyPackageRequirements
     '''
-    Converts an image into a long vector where the first three (or 1: for grayscale)
-    elements of each row are the color intensity information, and the last two are the
-    X and Y coordinates of the pixel
-    :param image:
-    :param args:
-    :return:
-    '''
+        Converts an image into a long vector where the first three (or 1: for grayscale)
+        elements of each row are the color intensity information, and the last two are the
+        X and Y coordinates of the pixel
+        :param image:
+        :param args:
+        :return:
+        '''
     image_array = np.zeros((args.num_elements_flat, (args.num_channels + 2)))
 
     image_array_index = 0
@@ -147,27 +148,29 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
     :param use_median: Use median value as the cluster intensity or not (False -> mean is used, True -> median is used)
     :return segmented_image:  The segmented image of shape [height, width, num_channels]
     '''
-    if args.color_weight_mode==2:
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-    image = image.astype(np.float64)
+    image = convert(image, 0, 1)
     label_values = np.unique(clustered_labels)
     segmented_image = np.zeros_like(image)
-    # image[:, :, 1:] = convert(image[:, :, 1:], 0, 255)
-    # if args.color_weight_mode==2:
-    #     image[:, :, 0] = convert(image[:, :, 0], 0, 179)
+    if use_median:
+        factor = 255 / (np.max(image) - np.min(image))
+    else:
+        factor = 1
+
     if args.num_channels == 3:
         for index in label_values:
             current_mask = (clustered_image == index).astype(np.float64)
-            current_segment = image * np.repeat(current_mask[..., None], args.num_channels, axis=2)
+            current_segment = image * np.repeat(current_mask[..., None], args.num_channels, axis=2) * factor
 
             for channel_index in range(args.num_channels):
                 current_channel = current_segment[:, :, channel_index]
                 cluster_total = np.count_nonzero(current_channel)
 
                 if use_median:
-                    non_zero_current_channel = np.sort(current_channel[current_channel != 0]) # Sort values to find median
+                    non_zero_current_channel = np.sort(
+                        current_channel[current_channel != 0])  # Sort values to find median
                     cluster_median = non_zero_current_channel[cluster_total // 2]  # Median of non-0 elements
-                    current_segment[:, :, channel_index] = np.where(current_channel > 0, cluster_median, current_channel)
+                    current_segment[:, :, channel_index] = np.where(current_channel > 0, cluster_median,
+                                                                    current_channel)
                 else:
                     cluster_sum = np.sum(current_channel)
                     cluster_mean = cluster_sum / cluster_total
@@ -179,7 +182,7 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
     elif args.num_channels == 1:
         for index in label_values:
             current_mask = (clustered_image == index).astype(np.float64)
-            current_segment = image * current_mask
+            current_segment = image * current_mask * factor
 
             current_channel = current_segment
             cluster_total = np.count_nonzero(current_channel)
@@ -191,10 +194,9 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
                 cluster_sum = np.sum(current_channel)
                 cluster_mean = cluster_sum / cluster_total
                 current_segment = np.where(current_segment > 0, cluster_mean, current_segment)
-            segmented_image += current_segment.astype(np.float64) #* np.random.rand(1)
+            segmented_image += current_segment.astype(np.float64)  # * np.random.rand(1)
 
     return segmented_image
-
 
 def get_dummy_image():
     '''

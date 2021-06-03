@@ -10,7 +10,6 @@ if __name__=='__main__':
 
     # imshow(image, args, 'Input Image')
 
-    scaled_image, args = process_image_attributes(image, args)
     # cluster image using spectral clustering
-    segmented_image = run_spectral_segmentation(scaled_image, image, args)
+    segmented_image = run_spectral_segmentation(image, args)
     imshow(segmented_image, args, 'Segmented Image')
