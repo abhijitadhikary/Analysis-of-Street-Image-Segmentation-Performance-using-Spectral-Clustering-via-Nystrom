@@ -36,11 +36,11 @@ def get_k_eig_vectors_nystrom(image_array, args):
 
     V = np.hstack((A, B)).T @ Asi @ U @ np.linalg.pinv(np.sqrt(L))
 
-    V = V[:, 1:args.num_eigen_vectors]
+    V = V[:, 1:args.num_clusters]
     # reordering V appropriately
     all_idx = list(np.arange(args.num_elements_flat))
     rem_idx = [idx for idx in all_idx if idx not in indices_low]
-    top_matrix = np.zeros((args.num_elements_flat, args.num_eigen_vectors-1))
+    top_matrix = np.zeros((args.num_elements_flat, args.num_clusters - 1))
     top_matrix[list(indices_low), :] = V[:dim_low, :]
     top_matrix[rem_idx, :] = V[dim_low:, :]
     return top_matrix

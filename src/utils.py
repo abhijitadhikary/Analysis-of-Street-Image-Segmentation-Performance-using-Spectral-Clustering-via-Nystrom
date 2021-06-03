@@ -16,7 +16,7 @@ def get_args():
     '''
     args = argparse.Namespace()
     args.num_clusters = 8
-    args.num_eigen_vectors = 8
+    # args.num_clusters = 8
     args.sigma_color = 0.4
     args.sigma_distance = 20
     args.height = 100
