@@ -3,10 +3,15 @@ from scipy.linalg import sqrtm
 
 def run_nystrom(weight_matrix_partial, indices_random_low_dim):
     '''
-    Calculates dim_low eigenvectors using the Nystrom on the weight marrix
-    :param weight_matrix_partial:
-    :param indices_random_low_dim:
-    :return:
+    Calculates dim_low eigenvectors using the Nystrom on the weight matrix
+    :param weight_matrix_partial: np.ndarray of shape [dim_low, num_elements]
+                       dim_low -> the number of random pixels chosen for Nystorm
+                       num_elements -> the total number of pixels in the image
+    :param indices_random_low_dim: np.ndarray of shape [dim_low,]
+                        the indices of the random pixels
+    :return V: np.ndarray of shape [num_elements, dim_low]
+                The eigenvectors for as approximated by nystorm method
+                Each eigenvector is ordered w.r.t. the indices of the random pixels -> needs reordering
     '''
     # ***********************************************************
     # ***********************************************************
