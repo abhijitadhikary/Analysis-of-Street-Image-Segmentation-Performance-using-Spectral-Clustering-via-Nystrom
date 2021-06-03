@@ -7,9 +7,9 @@ from utils import get_segmented_image
 def get_exponential_bump(distance, sigma=1):
     '''
     Applies an exponential function to each element of the array with a supplied variance
-    :param distance:
-    :param sigma:
-    :return:
+    :param distance: a matrix of distance measure
+    :param sigma: for the exponential bum, default = 1
+    :return: exponential function applied to distances, works as a similarity measure
     '''
     exponential_bump = np.exp(-np.abs(distance) / sigma ** 2)
     return exponential_bump
@@ -79,6 +79,13 @@ def get_weight_martix_partial(image_array, indices_random_low_dim, args):
     return weight_matrix
 
 def get_top_matrix(V, indices_random_low_dim, args):
+    '''
+        Returns the correctly ordered eigenvectors
+        :param V: the unordered eigenvectors
+        :param indices_random_low_dim: the random indices chosen for nystorm
+        :param args: the set of arguments
+        :return top_matrix: correctly ordered eigenvectors taking random indices into account
+        '''
     # reordering V appropriately
     all_idx = list(np.arange(args.num_elements_flat))
     rem_idx = [idx for idx in all_idx if idx not in indices_random_low_dim]
@@ -90,9 +97,9 @@ def get_top_matrix(V, indices_random_low_dim, args):
 
 def get_k_smallest_eigen_vectors(eigen_vectors, args):
     '''
-    Returns the k smallest eigen vectors of eigen_vectors
-    :param eigen_vectors:
-    :param args:
+    Returns the 1-k smallest eigen vectors of eigen_vectors
+    :param eigen_vectors: all the eigenvectors
+    :param args: number of eigenvectors needed = number of clusters - 1
     :return:
     '''
     # ***********************************************************
@@ -104,10 +111,10 @@ def get_k_smallest_eigen_vectors(eigen_vectors, args):
 
 def get_random_indices(array, num_indices, replace=False):
     '''
-    Returns specified number of random indices from the supplied array
-    :param array:
-    :param num_indices:
-    :param replace:
+    Returns specified number of random indices (uniform distribution) from the supplied array
+    :param array: The range from which the indices are to be chosen
+    :param num_indices: The number of random indices chosen
+    :param replace: if we want the random points chosen to be repeated or not, default = False
     :return:
     '''
     return np.random.choice(array, size=num_indices, replace=replace)
