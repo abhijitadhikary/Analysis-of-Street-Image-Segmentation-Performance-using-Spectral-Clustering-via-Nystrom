@@ -12,10 +12,10 @@ import argparse
 
 def get_args():
     args = argparse.Namespace()
-    args.num_clusters = 3
+    args.num_clusters = 8
     args.num_eigen_vectors = 3
-    args.sigma_color = 0.5
-    args.sigma_distance = 5
+    args.sigma_color = 0.4
+    args.sigma_distance = 20
     args.height = 100
     args.width = 100
     args.num_channels = 0
@@ -103,9 +103,10 @@ def get_k_eig_vectors_nystrom(image_array, args):
 
     indices_low = np.random.choice(args.num_elements_flat, size=dim_low, replace=False)
     image_low = image_array[indices_low]
-    distances_colour = np.linalg.norm(np.expand_dims(image_array[:,:args.num_channels], axis=1) - image_low[:,:args.num_channels], axis=-1, ord=2)
-    distances_position = np.linalg.norm(np.expand_dims(image_array[:,args.num_channels:], axis=1) - image_low[:,args.num_channels:], axis=-1, ord=2)
-    weight_matrix = (get_exponential_bump(distances_colour,args.sigma_color)*get_exponential_bump(distances_position,args.sigma_distance)).T
+    distances_colour = np.linalg.norm(np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
+    distances_position = np.linalg.norm(np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
+    weight_matrix = (get_exponential_bump(distances_colour, args.sigma_color) * get_exponential_bump(distances_position, args.sigma_distance)).T
+    # weight_matrix = (get_exponential_bump(distances_colour, args.sigma_color)).T
     row = [i for i in range(dim_low)]
     weight_matrix[row, row] = 1
 

@@ -149,7 +149,8 @@ def get_k_eig_vectors_nystrom(image_array):
     image_low = image_array[indices_low]
     distances_colour = np.linalg.norm(np.expand_dims(image_array[:,:args['num_channels']], axis=1) - image_low[:,:args['num_channels']], axis=-1, ord=2)
     distances_position = np.linalg.norm(np.expand_dims(image_array[:,args['num_channels']:], axis=1) - image_low[:,args['num_channels']:], axis=-1, ord=2)
-    weight_matrix = (get_exponential_bump(distances_colour,args['sigma_color'])*get_exponential_bump(distances_position,args['sigma_distance'])).T
+    # weight_matrix = (get_exponential_bump(distances_colour,args['sigma_color']) * get_exponential_bump(distances_position,args['sigma_distance'])).T
+    weight_matrix = (get_exponential_bump(distances_colour, args['sigma_color'])).T
     row = [i for i in range(dim_low)]
     weight_matrix[row, row] = 1
     # for index_1 in range(len(image_low)):
