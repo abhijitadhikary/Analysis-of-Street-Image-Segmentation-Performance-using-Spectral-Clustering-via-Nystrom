@@ -13,11 +13,6 @@ def run_nystrom(weight_matrix_partial, indices_random_low_dim):
                 The eigenvectors for as approximated by nystorm method
                 Each eigenvector is ordered w.r.t. the indices of the random pixels -> needs reordering
     '''
-    # ***********************************************************
-    # ***********************************************************
-    # UPDATE THIS TO HAVE PROPER COMMENTS AND EXPLANATION
-    # ***********************************************************
-    # ***********************************************************
     A = weight_matrix_partial[:, list(indices_random_low_dim)]  # nxn
     B = np.delete(weight_matrix_partial, list(indices_random_low_dim), axis=1)  # nxm
     n, m = B.shape

@@ -4,10 +4,11 @@ import os
 import argparse
 import cv2
 
+
 def get_args():
     '''
     Returns all the hyperparameters
-    :return:
+    :return args: the hyper-parameters
     '''
     args = argparse.Namespace()
     args.num_clusters = 8
@@ -24,13 +25,14 @@ def get_args():
     args.color_weight_mode = 2 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     return args
 
+
 def convert(source, min_value=0, max_value=1):
     '''
     Rescales the values of an array between min_value and max_value
-    :param source:
-    :param min_value:
-    :param max_value:
-    :return:
+    :param source: Input image if size [height, width, num_channels]
+    :param min_value: Minimum scalar value in the target
+    :param max_value: Maximum scalar value in the target
+    :return target: Rescaled target with same shape as the source
     '''
     source = np.array(source).astype(np.float64)
     smin = source.min()
@@ -40,6 +42,7 @@ def convert(source, min_value=0, max_value=1):
     target = (a * source + b)
     return target
 
+
 def get_file_names(root=os.path.join('..', 'data')):
     filenames = []
     for root, _, files in os.walk(root):
@@ -47,6 +50,7 @@ def get_file_names(root=os.path.join('..', 'data')):
             filename = os.path.join(root, f)
             filenames.append(filename)
     return filenames
+
 
 def imshow(image, args, title=''):
     '''
@@ -70,6 +74,7 @@ def imshow(image, args, title=''):
     else:
         plt.imshow(image)
     plt.show()
+
 
 def process_image_attributes(image, args):
     '''
@@ -100,6 +105,7 @@ def process_image_attributes(image, args):
     image = convert(image, min_value=0, max_value=1)
     return image, args
 
+
 def get_image_array(image, args):
     '''
     Converts an image into a long vector where the first three (or 1: for grayscale)
@@ -129,16 +135,17 @@ def get_image_array(image, args):
 
     return image_array
 
+
 def get_segmented_image(image, clustered_image, clustered_labels, args, use_median=True):
     '''
     Returns a segmented image based on the supplied labels, either using median
     or mean each cluster
-    :param image:
-    :param clustered_image:
-    :param clustered_labels:
-    :param args:
-    :param use_median:
-    :return:
+    :param image : The input image of shape [height, width, num_channels]
+    :param clustered_image: The cluster label of each pixel in the shape of the image [height, width]
+    :param clustered_labels: The cluster label of each pixel flattened, shape = [height*width,]
+    :param args: The arguments with all the hyper-parameters
+    :param use_median: Use median value as the cluster intensity or not (False -> mean is used, True -> median is used)
+    :return segmented_image:  The segmented image of shape [height, width, num_channels]
     '''
     label_values = np.unique(clustered_labels)
     segmented_image = np.zeros_like(image)
@@ -187,7 +194,12 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
 
     return segmented_image
 
+
 def get_dummy_image():
+    '''
+    To make the dummy noise image, for low level debugging and testing
+    :return image: a single channel image with 4 circles in a 100x100 grid
+    '''
     l = 100
     x, y = np.indices((l, l))
 

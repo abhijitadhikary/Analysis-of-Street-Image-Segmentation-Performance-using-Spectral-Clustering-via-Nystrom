@@ -1,12 +1,17 @@
 import numpy as np
 from sklearn.cluster import KMeans
 
+
 def run_kmeans_sklearn(eigen_vecs_k, args):
-    # ***********************************************************
-    # ***********************************************************
-    # CHANGE THIS TO A NATIVE PYTHON KMEANS IMPLEMENTATION
-    # ***********************************************************
-    # ***********************************************************
+    '''
+    sk-learn k-means clustering
+    :param eigen_vecs_k: np.ndarray of shape [no_data, no_dimensions]
+                       input data points
+    :param args: arguments for number of clusters
+    :return clustered_labels: np.ndarray of shape [no_data] and integer data type
+                            contains values in [0, k-1] indicating which
+                            cluster each data point belongs to
+    '''
     kmeans = KMeans(n_clusters=args.num_clusters, random_state=0).fit(eigen_vecs_k)
     clustered_labels = kmeans.labels_
 
