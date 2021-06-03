@@ -14,7 +14,7 @@ def get_exponential_bump(distance, sigma=1):
     exponential_bump = np.exp(-np.abs(distance) / sigma ** 2)
     return exponential_bump
 
-def get_eucledian_distance_vectorized(point_1, point_2_array):
+def get_euclidean_distance(point_1, point_2_array):
     '''
     Returns the Euclidean distance between each row of two arrays
     :param point_1:
@@ -23,6 +23,15 @@ def get_eucledian_distance_vectorized(point_1, point_2_array):
     '''
     euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
     return euclidean_distance
+
+def get_hsv_weights(array):
+    h, s, v = array[:, 0].reshape(-1, 1), array[:, 1].reshape(-1, 1), array[:, 2].reshape(-1, 1)
+    output = np.hstack((
+        v,
+        v * s * np.sin(h),
+        v * s * np.cos(h),
+    ))
+    return output
 
 def get_color_weight(image_array, image_low, args):
     '''
@@ -40,7 +49,25 @@ def get_color_weight(image_array, image_low, args):
     # 0: RGB, 1: constant(1), 2: HSV, 1: DOOG
 
     if args.color_weight_mode == 0:
+        # intensity distance (RGB)
         color_weight = np.linalg.norm(np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
+    elif args.color_weight_mode == 1:
+        # not a good idea for images
+        color_weight = np.ones((image_array.shape[0], image_low.shape[0])).astype(np.float64)
+    elif args.color_weight_mode == 2:
+        # for color images
+        if args.num_channels == 3:
+            image_array = get_hsv_weights(image_array)
+            image_low = get_hsv_weights(image_low)
+            color_weight = np.linalg.norm(np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1,  ord=2)
+        # for grayscale images
+        elif args.num_channels == 1:
+            raise NotImplementedError('HSV weight mode not implemented for Grayscale images')
+    elif args.color_weight_mode == 3:
+        pass
+    else:
+        raise NotImplementedError('Please choose one of the specified values for args.color_weight_mode')
+
     return color_weight
 
 def get_distance_weight(image_array, image_low, args):
