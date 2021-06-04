@@ -24,7 +24,7 @@ def get_args():
     args.num_elements_flat = 0
     args.use_numpy_eigen_decompose = True
     args.dim_low = 100
-    args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
+    args.color_weight_mode = 2 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     args.train_condition = True,
     args.val_condition = True,
     args.test_condition = True,
