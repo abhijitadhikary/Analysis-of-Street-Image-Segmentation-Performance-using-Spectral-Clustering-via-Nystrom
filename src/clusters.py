@@ -1,6 +1,5 @@
 from kmeans import run_kmeans_sklearn, run_kmeans
 
-
 def get_clustered_image(eigen_vectors, args):
     '''
     Performs clustering on a supplied set of eigenvectors and returns the clustered image

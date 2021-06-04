@@ -2,8 +2,6 @@ import numpy as np
 from nystrom import run_nystrom
 from utils import get_image_array, process_image_attributes
 from clusters import get_clustered_image
-from utils import get_segmented_image
-
 
 def get_exponential_bump(distance, sigma=1):
     '''
@@ -14,18 +12,6 @@ def get_exponential_bump(distance, sigma=1):
     '''
     exponential_bump = np.exp(-np.abs(distance) / sigma ** 2)
     return exponential_bump
-
-
-# def get_euclidean_distance(point_1, point_2_array):
-#     '''
-#     Returns the Euclidean distance between each row of two arrays
-#     :param point_1:
-#     :param point_2_array:
-#     :return:
-#     '''
-#     euclidean_distance = np.sqrt(np.sum(np.power((point_1 - point_2_array), 2), axis=1))
-#     return euclidean_distance
-
 
 def get_hsv_encodings(array):
     '''
@@ -41,7 +27,6 @@ def get_hsv_encodings(array):
         v * s * np.cos(h),
     ))
     return output
-
 
 def get_color_weight(image_array, image_low, args):
     '''
@@ -65,8 +50,7 @@ def get_color_weight(image_array, image_low, args):
     if args.color_weight_mode == 0:
         # intensity distance (RGB)
         color_weight = np.linalg.norm(
-            np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1,
-            ord=2)
+            np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
     elif args.color_weight_mode == 1:
         # not a good idea for images
         color_weight = np.ones((image_array.shape[0], image_low.shape[0])).astype(np.float64)
@@ -76,8 +60,7 @@ def get_color_weight(image_array, image_low, args):
             image_array = get_hsv_encodings(image_array)
             image_low = get_hsv_encodings(image_low)
             color_weight = np.linalg.norm(
-                np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1,
-                ord=2)
+                np.expand_dims(image_array[:, :args.num_channels], axis=1) - image_low[:, :args.num_channels], axis=-1, ord=2)
         # for grayscale images
         elif args.num_channels == 1:
             raise NotImplementedError('HSV weight mode not implemented for Grayscale images')
@@ -128,7 +111,6 @@ def get_weight_martix_partial(image_array, indices_random_low_dim, args):
 
     return weight_matrix
 
-
 def get_top_matrix(V, indices_random_low_dim, args):
     '''
         Returns the correctly ordered eigenvectors
@@ -146,7 +128,6 @@ def get_top_matrix(V, indices_random_low_dim, args):
 
     return top_matrix
 
-
 def get_k_smallest_eigen_vectors(eigen_vectors, args):
     '''
     Returns the 1-k smallest eigen vectors of eigen_vectors
@@ -161,7 +142,6 @@ def get_k_smallest_eigen_vectors(eigen_vectors, args):
     # ***********************************************************
     return eigen_vectors[:, 1:args.num_clusters]
 
-
 def get_random_indices(array, num_indices, replace=False):
     '''
     Returns specified number of random indices (uniform distribution) from the supplied array
@@ -171,7 +151,6 @@ def get_random_indices(array, num_indices, replace=False):
     :return: array of size [num_indices,]
     '''
     return np.random.choice(array, size=num_indices, replace=replace)
-
 
 def run_spectral_clustering(image_real, args):
     '''

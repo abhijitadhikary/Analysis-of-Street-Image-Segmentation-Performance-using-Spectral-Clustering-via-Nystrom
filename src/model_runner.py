@@ -1,7 +1,5 @@
-from utils import get_args, unzip_dataset, imshow, print_cluster_memberships, get_segmented_image, get_stacked_image_horizontal, create_dirs, get_IOU, save_image
+from utils import print_cluster_memberships, get_segmented_image, get_stacked_image_horizontal, save_image
 from spectral_clustering import run_spectral_clustering
-import numpy as np
-from dataloader import prepare_dataset
 import os
 from tqdm import tqdm
 

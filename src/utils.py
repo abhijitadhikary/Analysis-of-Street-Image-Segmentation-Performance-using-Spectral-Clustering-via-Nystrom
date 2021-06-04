@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import os
 import argparse
 import cv2
-from PIL import Image
-import torch
 import zipfile
 
 
@@ -14,7 +12,7 @@ def get_args():
     :return args: the hyper-parameters
     '''
     args = argparse.Namespace()
-    args.random_state = 0
+    args.seed = 0
     args.num_clusters = 8
     # args.num_clusters = 8
     args.sigma_color = 0.6 # 0.4
@@ -42,6 +40,8 @@ def setup_model_parameters():
     '''
     # load hyperparameters
     args = get_args()
+    # apply seed to numpy
+    np.random.seed(args.seed)
     # create the required directories if they don't exist
     create_dirs()
     # unzip the iid dataset if it hasn't already been unzipped

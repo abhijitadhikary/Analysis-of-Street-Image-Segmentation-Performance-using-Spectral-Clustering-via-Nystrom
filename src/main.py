@@ -1,17 +1,14 @@
-from utils import setup_model_parameters, get_args, unzip_dataset, imshow, get_segmented_image, get_stacked_image_horizontal, create_dirs, get_IOU, save_image
-from spectral_clustering import run_spectral_clustering
-import numpy as np
+from utils import setup_model_parameters
 from dataloader import get_datasets
-import os
 from model_runner import run
 
 if __name__ == '__main__':
     # initialize variables, create directories, unzip dataset
     args = setup_model_parameters()
-
     # get datasets
     dataset_train, dataset_val, dataset_test = get_datasets()
 
+    # run the model in either train, validation of test mode
     if args.train_condition:
         run(dataset_train, args, mode='train')
     if args.val_condition:

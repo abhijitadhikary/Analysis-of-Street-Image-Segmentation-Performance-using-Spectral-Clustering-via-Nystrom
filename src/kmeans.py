@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.cluster import KMeans
 
-
 def run_kmeans_sklearn(eigen_vecs_k, args):
     '''
     sk-learn k-means clustering
