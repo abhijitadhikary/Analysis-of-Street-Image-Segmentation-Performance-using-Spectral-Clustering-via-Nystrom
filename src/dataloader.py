@@ -50,7 +50,7 @@ def read_image_as_array(image_path_list_full, is_label):
                 image = convert(image, 0, 255)
             else:
                 # convert images from BGR to RGB
-                cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image_list.append(image)
         except cv2.error as e:
             raise FileNotFoundError(f'{e}\tFile not found: {image_path_full}')

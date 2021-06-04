@@ -1,7 +1,10 @@
-from utils import get_args, imshow, get_segmented_image, get_IOU
+from utils import get_args, imshow, get_segmented_image, get_stacked_image_horizontal, get_IOU, save_image
 from spectral_clustering import run_spectral_clustering
 import numpy as np
 from dataloader import load_data
+import os
+
+
 
 if __name__ == '__main__':
     args = get_args()
@@ -17,18 +20,22 @@ if __name__ == '__main__':
     # cluster image using spectral clustering
     clustered_image = run_spectral_clustering(image, args)
     # segment the image according to cluster mean/medians color values
-    segmented_image = get_segmented_image(image, clustered_image, clustered_image.reshape(-1), args)
-    imshow(segmented_image, args, 'Segmented Image (Pred)')
+    segmented_image_pred = get_segmented_image(image, clustered_image, clustered_image.reshape(-1), args)
+    imshow(segmented_image_pred, 'Segmented Image (Pred)')
 
-    unique, counts = np.unique(segmented_image[:, :, 0], return_counts=True)
+    unique, counts = np.unique(segmented_image_pred[:, :, 0], return_counts=True)
     print(f'After Segmentation\n{dict(zip(unique, counts))}')
 
     # iid GT labels
     segmented_image_gt = get_segmented_image(image, labels_image_gt, labels_image_gt.reshape(-1), args)
-    imshow(segmented_image_gt, args, 'Segmented Image (GT)')
+    imshow(segmented_image_gt, 'Segmented Image (GT)')
 
+    stacked_image_horizontal = get_stacked_image_horizontal(image, segmented_image_gt, segmented_image_pred)
 
-
+    title = f'Image{" " * 30}Label (GT){" " * 30}Label (Pred)'
+    imshow(stacked_image_horizontal, title)
+    save_path_stacked_full = os.path.join('..', 'results', 'stacked', f'{image_index}.png')
+    save_image(stacked_image_horizontal, save_path_stacked_full)
     # #iid GT Images
     # image = cv2.imread('../data/idd20k_lite/leftImg8bit/train/0/024541_image.jpg')
     # # labels_image_gt = cv2.imread('../data/idd20k_lite/gtFine/train/0/024541_label.png')
@@ -41,22 +48,22 @@ if __name__ == '__main__':
     # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     # # image = get_dummy_image()
     #
-    # # imshow(image, args, 'Input Image')
+    # # imshow(image, 'Input Image')
     #
     # # cluster image using spectral clustering
     # clustered_image = run_spectral_clustering(image, args)
     # # segment the image according to cluster mean/medians color values
-    # segmented_image = get_segmented_image(image, clustered_image, clustered_image.reshape(-1), args)
-    # imshow(segmented_image, args, 'Segmented Image (Pred)')
+    # segmented_image_pred = get_segmented_image(image, clustered_image, clustered_image.reshape(-1), args)
+    # imshow(segmented_image_pred, a'Segmented Image (Pred)')
     #
-    # unique, counts = np.unique(segmented_image[:, :, 0], return_counts=True)
+    # unique, counts = np.unique(segmented_image_pred[:, :, 0], return_counts=True)
     # print(f'After Segmentation\n{dict(zip(unique, counts))}')
     #
     #
     # # iid GT labels
     # segmented_image_gt = get_segmented_image(image, labels_image_gt, labels_image_gt.reshape(-1), args)
-    # imshow(segmented_image_gt, args, 'Segmented Image (GT)')
+    # imshow(segmented_image_gt, 'Segmented Image (GT)')
     #
-    # iou = get_IOU(segmented_image_gt, segmented_image)
+    # iou = get_IOU(segmented_image_gt, segmented_image_pred)
     # print(f'IOU: {iou:.4f}')
 

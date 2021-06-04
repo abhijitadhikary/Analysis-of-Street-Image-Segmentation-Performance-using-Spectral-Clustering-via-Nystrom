@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import argparse
 import cv2
+from PIL import Image
 import torch
 
 
@@ -18,6 +19,7 @@ def get_args():
     args.sigma_distance = 5 # 20
     args.height = 100
     args.width = 100
+    args.save_path_stacked = os.path.join('..', 'results', 'stacked')
     args.num_channels = 0
     args.num_dimensions = 0
     args.num_elements_flat = 0
@@ -53,28 +55,40 @@ def get_file_names(root=os.path.join('..', 'data')):
     return filenames
 
 
-def imshow(image, args=None, title=''):
+def imshow(image, title='', save_path_full=None):
     '''
-    Displays an image using matplotlib
+    Displays an image using matplotlib, additionally saves the image if save_path_full is provided
     :param image: The image to show ( of shape [height, width, 3]-> colour or [height, width]-> grayscale)
     :param title: A string. Title to be put as the heading
     :return:
     '''
-    # rearrange pixel values between 0 and 255 and convert dtype to uint8
-    # image = convert(image, 0, 255).astype(np.uint8)
+    # convert image datatype to uint8
     image = image.astype(np.uint8)
-    # # if input image is hsv format, convert it to rgb
-    # if args.color_weight_mode == 2 and args.num_channels == 3:
-    #     image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
+    height, width = image.shape[0], image.shape[1]
 
-    plt.figure(figsize=(5, 5))
+    # deal with horizontally stacked images
+    plt_height = 3
+    plt_width = plt_height if width < 500 else plt_height*3
+
+    plt.figure(figsize=(plt_width, plt_height))
     plt.title(title)
+    plt.xticks([])
+    plt.yticks([])
 
     if len(image.shape) == 2:
         plt.imshow(image, cmap='gray')
     else:
         plt.imshow(image)
+
+    if save_path_full is not None:
+        try:
+            plt.savefig(save_path_full)
+        except:
+            # raise an error if file can not be saved
+            pass
     plt.show()
+
+
 
 
 def process_image_attributes(image, args):
@@ -148,7 +162,7 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
     :param clustered_labels: The cluster label of each pixel flattened, shape = [height*width,]
     :param args: The arguments with all the hyper-parameters
     :param use_median: Use median value as the cluster intensity or not (False -> mean is used, True -> median is used)
-    :return segmented_image:  The segmented image of shape [height, width, num_channels]
+    :return segmented_image_pred:  The segmented image of shape [height, width, num_channels]
     '''
     image = convert(image, 0, 1)
     label_values = np.unique(clustered_labels)
@@ -232,6 +246,28 @@ def get_dummy_image():
     image = image.astype(float)
     image += 1 + 0.2 * np.random.randn(*image.shape)
     return image
+
+def get_stacked_image_horizontal(image, label_gt, label_pred):
+    '''
+    Stacks three images side by side
+    :param image:
+    :param label_gt:
+    :param label_pred:
+    :return:
+    '''
+    return np.hstack((image, label_gt, label_pred))
+
+def save_image(image, image_path_full, title=None):
+
+
+    if title is not None:
+        imshow(image, title, image_path_full)
+    else:
+        image = image.astype(np.uint8)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(image_path_full, image)
+
+    # new_im.save('test.jpg')
 
 def get_IOU(ground_truth, predicted):
     # for channel_index in range(ground_truth.shape[2]):
