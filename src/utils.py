@@ -13,6 +13,7 @@ def get_args():
     args = argparse.Namespace()
     args.seed = 0
     args.num_clusters = 8
+    args.centroid_type = 1 # 0: mean, 1: median
     # args.num_clusters = 8
     args.sigma_color = 0.6 # 0.4
     args.sigma_distance = 5 # 20
@@ -198,7 +199,7 @@ def get_image_array(image, args):
 
     return image_array
 
-def get_segmented_image(image, clustered_image, clustered_labels, args, use_median=True):
+def get_segmented_image(image, clustered_image, clustered_labels, args):
     '''
     Returns a segmented image based on the supplied labels, either using median
     or mean each cluster
@@ -210,9 +211,11 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
     :return segmented_image_pred:  The segmented image of shape [height, width, num_channels]
     '''
     image = convert(image, 0, 1)
+    # change 0 entries to a small number
+    image = np.where(image == 0, 1/255, image)
     label_values = np.unique(clustered_labels)
     segmented_image = np.zeros_like(image)
-    if use_median:
+    if args.centroid_type == 1:
         factor = 255 / (np.max(image) - np.min(image))
     else:
         factor = 1
@@ -226,7 +229,7 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
                 current_channel = current_segment[:, :, channel_index]
                 cluster_total = np.count_nonzero(current_channel)
 
-                if use_median:
+                if args.centroid_type == 1:
                     non_zero_current_channel = np.sort(
                         current_channel[current_channel != 0])  # Sort values to find median
                     cluster_median = non_zero_current_channel[cluster_total // 2]  # Median of non-0 elements
@@ -247,7 +250,7 @@ def get_segmented_image(image, clustered_image, clustered_labels, args, use_medi
 
             current_channel = current_segment
             cluster_total = np.count_nonzero(current_channel)
-            if use_median:
+            if args.centroid_type == 1:
                 non_zero_current_segment = current_segment[current_segment != 0]
                 cluster_center = non_zero_current_segment[cluster_total // 2]
                 current_segment = np.where(current_segment > 0, cluster_center, current_segment)
