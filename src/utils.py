@@ -77,6 +77,7 @@ def setup_model_parameters():
     create_dirs()
     # unzip the iid dataset if it hasn't already been unzipped
     unzip_dataset()
+    print('Model parameters successfully set up.')
     return args
 
 def create_dirs():
@@ -115,11 +116,15 @@ def unzip_dataset():
     '''
     data_path = os.path.join('..', 'data')
     if not os.path.exists(os.path.join(data_path, 'idd20k_lite')):
-        print('Unzipping dataset')
         zip_file_path = os.path.join(data_path, 'idd20k_lite.zip')
-        with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
-            zip_ref.extractall(data_path)
-            print('Dataset successfully unzipped')
+        try:
+            with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
+                print('Unzipping dataset.......')
+                zip_ref.extractall(data_path)
+                print('Dataset successfully unzipped.')
+        except FileNotFoundError as error:
+            print(f'Exiting program: File does not exist: {zip_file_path}.\nPlease put the idd20k_lite.zip file in {data_path} folder and try again.')
+            quit(1)
 
 def convert(source, min_value=0, max_value=1):
     '''
