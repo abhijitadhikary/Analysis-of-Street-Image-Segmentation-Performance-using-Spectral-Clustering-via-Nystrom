@@ -13,10 +13,10 @@ def get_args():
     args = argparse.Namespace()
     args.seed = 0
     args.num_clusters = 8
-    args.centroid_type = 0 # 0: mean, 1: median
+    args.centroid_type = 1 # 0: mean, 1: median
     # args.num_clusters = 8
-    args.sigma_color = 0.6 # 0.4
-    args.sigma_distance = 5 # 20
+    args.sigma_color = 0.5 # 0.4
+    args.sigma_distance = 16 # 20
     args.height = 100
     args.width = 100
     args.save_path_stacked = os.path.join('..', 'results', 'stacked')
@@ -24,7 +24,7 @@ def get_args():
     args.num_dimensions = 0
     args.num_elements_flat = 0
     args.use_numpy_eigen_decompose = True
-    args.dim_low = 100
+    args.dim_low = 8
     args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     args.train_condition = True,
     args.val_condition = True,
