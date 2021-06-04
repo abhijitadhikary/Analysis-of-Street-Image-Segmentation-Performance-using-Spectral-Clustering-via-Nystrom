@@ -1,4 +1,4 @@
-from kmeans import run_kmeans_sklearn, run_kmeans
+from kmeans import run_kmeans
 
 def get_clustered_image(eigen_vectors, args):
     '''
