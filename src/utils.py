@@ -28,6 +28,26 @@ def get_args():
     args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     return args
 
+def create_dirs():
+    dir_list = [
+        ['..', 'data'],
+        ['..', 'documents'],
+        ['..', 'documents', 'docs'],
+        ['..', 'documents', 'references'],
+        ['..', 'notebooks'],
+        ['..', 'output'],
+        ['..', 'output', 'stacked'],
+        ['..', 'output', 'stacked', 'train'],
+        ['..', 'output', 'stacked', 'val'],
+        ['..', 'output', 'stacked', 'test']
+    ]
+    for current_dir in dir_list:
+        current_path = current_dir[0]
+        if len(current_dir) > 1:
+            for sub_dir_index in range(1, len(current_dir)):
+                current_path = os.path.join(current_path, current_dir[sub_dir_index])
+        if not os.path.exists(current_path):
+            os.makedirs(current_path)
 
 def convert(source, min_value=0, max_value=1):
     '''

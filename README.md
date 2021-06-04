@@ -4,8 +4,11 @@
 .
 ├── data
 │   └── *                   <- put the idd20k_lite.zip here and unzip as it is
-├── results
-│   ├── *                   <- result images go here
+├── output
+    └── stacked                   <- side by side images (Image, Labels (GT), Labels (Pred))
+        |───── train
+        |───── val
+        └───── test
 ├── documents
 │   ├── docs
 │   └── references

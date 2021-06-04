@@ -1,4 +1,4 @@
-from utils import get_args, imshow, get_segmented_image, get_stacked_image_horizontal, get_IOU, save_image
+from utils import get_args, imshow, get_segmented_image, get_stacked_image_horizontal, create_dirs, get_IOU, save_image
 from spectral_clustering import run_spectral_clustering
 import numpy as np
 from dataloader import load_data
@@ -8,6 +8,7 @@ import os
 
 if __name__ == '__main__':
     args = get_args()
+    create_dirs()
     # load data
     image_array_train, label_array_train, label_array_inst_train = load_data(variant='train')
     image_array_val, label_array_val, label_array_inst_val = load_data(variant='val')
@@ -33,8 +34,9 @@ if __name__ == '__main__':
     stacked_image_horizontal = get_stacked_image_horizontal(image, segmented_image_gt, segmented_image_pred)
 
     title = f'Image{" " * 30}Label (GT){" " * 30}Label (Pred)'
+    variant = 'train' # 'train', 'val', 'test'
     imshow(stacked_image_horizontal, title)
-    save_path_stacked_full = os.path.join('..', 'results', 'stacked', f'{image_index}.png')
+    save_path_stacked_full = os.path.join('..', 'output', 'stacked', variant, f'{image_index}.png')
     save_image(stacked_image_horizontal, save_path_stacked_full)
     # #iid GT Images
     # image = cv2.imread('../data/idd20k_lite/leftImg8bit/train/0/024541_image.jpg')
