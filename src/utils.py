@@ -14,6 +14,7 @@ def get_args():
     :return args: the hyper-parameters
     '''
     args = argparse.Namespace()
+    args.random_state = 0
     args.num_clusters = 8
     # args.num_clusters = 8
     args.sigma_color = 0.6 # 0.4
@@ -27,9 +28,31 @@ def get_args():
     args.use_numpy_eigen_decompose = True
     args.dim_low = 100
     args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
+    args.train_condition = True,
+    args.val_condition = True,
+    args.test_condition = True,
+    args.save_stacked_title = False
+    args.print_cluster_memberships = False
+    return args
+
+def setup_model_parameters():
+    '''
+    Sets up the model parameters, parses the namespace and returns all variables in args
+    :return:
+    '''
+    # load hyperparameters
+    args = get_args()
+    # create the required directories if they don't exist
+    create_dirs()
+    # unzip the iid dataset if it hasn't already been unzipped
+    unzip_dataset()
     return args
 
 def create_dirs():
+    '''
+    Creates the required directories and sub-directories required for the project
+    :return:
+    '''
     dir_list = [
         ['..', 'data'],
         ['..', 'documents'],
@@ -55,11 +78,17 @@ def create_dirs():
                 pass
 
 def unzip_dataset():
+    '''
+    Unzips the idd20k_lite dataset (need to put idd20k_lite.zip) in the data folder
+    :return:
+    '''
     data_path = os.path.join('..', 'data')
     if not os.path.exists(os.path.join(data_path, 'idd20k_lite')):
+        print('Unzipping dataset')
         zip_file_path = os.path.join(data_path, 'idd20k_lite.zip')
         with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
             zip_ref.extractall(data_path)
+            print('Dataset successfully unzipped')
 
 def convert(source, min_value=0, max_value=1):
     '''
@@ -76,16 +105,6 @@ def convert(source, min_value=0, max_value=1):
     b = max_value - a * smax
     target = (a * source + b)
     return target
-
-
-def get_file_names(root=os.path.join('..', 'data')):
-    filenames = []
-    for root, _, files in os.walk(root):
-        for f in files:
-            filename = os.path.join(root, f)
-            filenames.append(filename)
-    return filenames
-
 
 def imshow(image, title='', save_path_full=None):
     '''
@@ -120,9 +139,6 @@ def imshow(image, title='', save_path_full=None):
             pass
     plt.show()
 
-
-
-
 def process_image_attributes(image, args):
     '''
     Update args's parameters corresponding to the image dimension
@@ -153,7 +169,6 @@ def process_image_attributes(image, args):
     image = convert(image, min_value=0, max_value=1)
     return image, args
 
-
 def get_image_array(image, args):
     # noinspection PyPackageRequirements
     '''
@@ -183,7 +198,6 @@ def get_image_array(image, args):
             image_array_index += 1
 
     return image_array
-
 
 def get_segmented_image(image, clustered_image, clustered_labels, args, use_median=True):
     '''
@@ -266,31 +280,41 @@ def get_dummy_image():
     circle3 = (x - center3[0]) ** 2 + (y - center3[1]) ** 2 < radius3 ** 2
     circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4 ** 2
 
-    # #############################################################################
     # 4 circles
     image = circle1 + circle2 + circle3 + circle4
-
-    # We use a mask that limits to the foreground: the problem that we are
-    # interested in here is not separating the objects from the background,
-    # but separating them one from the other.
-    mask = image.astype(bool)
-
     image = image.astype(float)
     image += 1 + 0.2 * np.random.randn(*image.shape)
     return image
 
-def get_stacked_image_horizontal(image, label_gt, label_pred):
+def print_cluster_memberships(segmented_image_pred, state):
     '''
-    Stacks three images side by side
-    :param image:
-    :param label_gt:
-    :param label_pred:
+    Prints how many points belong to which cluster
+    :param segmented_image_pred:
+    :param state:
     :return:
     '''
-    return np.hstack((image, label_gt, label_pred))
+    unique, counts = np.unique(segmented_image_pred[:, :, 0], return_counts=True)
+    print(f'{state}\n{dict(zip(unique, counts))}')
+
+def get_stacked_image_horizontal(*image_list):
+    '''
+    Stacks three images side by side
+    :param image_list:
+    :return:
+    '''
+    stacked_image = np.copy(image_list[0])
+    for image in image_list[1:]:
+        stacked_image = np.hstack((stacked_image, image))
+    return stacked_image
 
 def save_image(image, image_path_full, title=None):
-
+    '''
+    Saves image, if a title is provided, it is augmented on top of the images
+    :param image:
+    :param image_path_full:
+    :param title:
+    :return:
+    '''
 
     if title is not None:
         imshow(image, title, image_path_full)
@@ -298,8 +322,6 @@ def save_image(image, image_path_full, title=None):
         image = image.astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(image_path_full, image)
-
-    # new_im.save('test.jpg')
 
 def get_IOU(ground_truth, predicted):
     # for channel_index in range(ground_truth.shape[2]):

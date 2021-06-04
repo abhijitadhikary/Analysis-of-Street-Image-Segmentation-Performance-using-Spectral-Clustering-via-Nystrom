@@ -199,10 +199,6 @@ def run_spectral_clustering(image_real, args):
     # get top matrix - SID PLEASE EXPLAIN WHAT THIS DOES
     eigen_vecs_k = get_top_matrix(eigen_vectors_k, indices_random_low_dim, args)
 
-    # end = time()
-    # print('Run time', end - start)
-    print(eigen_vecs_k.shape)
-
     # segment the eigenvectors using
     clustered_image = get_clustered_image(eigen_vecs_k, args)
 

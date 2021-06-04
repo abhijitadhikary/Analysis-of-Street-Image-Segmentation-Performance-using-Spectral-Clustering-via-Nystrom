@@ -57,22 +57,34 @@ def read_image_as_array(image_path_list_full, is_label):
     image_array = np.array(image_list)
     return image_array
 
-def load_data(variant):
+def prepare_dataset(mode):
     '''
     Returns images and labels (if applicable) of train, test and val data
-    :param variant:
+    :param mode:
     :return:
     '''
-    dir_path_image = os.path.join('..', 'data', 'idd20k_lite', 'leftImg8bit', variant)
-    dir_path_label = os.path.join('..', 'data', 'idd20k_lite', 'gtFine', variant)
+    dir_path_image = os.path.join('..', 'data', 'idd20k_lite', 'leftImg8bit', mode)
+    dir_path_label = os.path.join('..', 'data', 'idd20k_lite', 'gtFine', mode)
 
     # extract full paths
     image_path_list_full_image = get_image_full_path(dir_path_image, mode='image')
     image_array = read_image_as_array(image_path_list_full_image, is_label=False)
-    if variant in ['train', 'val']:
+    if mode in ['train', 'val']:
         image_path_list_full_label, image_path_list_full_train_label_inst = get_image_full_path(dir_path_label, mode='label')
         label_array = read_image_as_array(image_path_list_full_label, is_label=True)
         label_array_inst = read_image_as_array(image_path_list_full_train_label_inst, is_label=True)
         return image_array, label_array, label_array_inst
     else:
         return image_array
+
+
+def get_datasets():
+    '''
+    Prepared and return train, val and test datasets as numpy arrays (N x H x W x C)
+    :return: 
+    '''
+    dataset_train = prepare_dataset(mode='train')
+    dataset_val = prepare_dataset(mode='val')
+    dataset_test = prepare_dataset(mode='test')
+
+    return dataset_train, dataset_val, dataset_test

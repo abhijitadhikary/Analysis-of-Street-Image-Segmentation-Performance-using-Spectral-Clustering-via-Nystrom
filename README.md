@@ -11,7 +11,7 @@ To run in the default settings please follow the following steps:
 ├── data
 │   └── *                   <- put the idd20k_lite.zip here before running
 ├── output
-    └── stacked                   <- side by side images (Image, Labels (GT), Labels (Pred))
+    └── stacked             <- side by side images (Image, Labels (GT), Labels (Pred))
         |───── train
         |───── val
         └───── test
