@@ -3,7 +3,7 @@
 ```
 .
 ├── data
-│   └── *                   <- put the idd20k_lite.zip here and unzip as it is
+│   └── *                   <- put the idd20k_lite.zip here before running
 ├── output
     └── stacked                   <- side by side images (Image, Labels (GT), Labels (Pred))
         |───── train

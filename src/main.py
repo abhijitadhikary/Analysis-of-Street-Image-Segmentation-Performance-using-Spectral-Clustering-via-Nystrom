@@ -1,14 +1,13 @@
-from utils import get_args, imshow, get_segmented_image, get_stacked_image_horizontal, create_dirs, get_IOU, save_image
+from utils import get_args, unzip_dataset, imshow, get_segmented_image, get_stacked_image_horizontal, create_dirs, get_IOU, save_image
 from spectral_clustering import run_spectral_clustering
 import numpy as np
 from dataloader import load_data
 import os
 
-
-
 if __name__ == '__main__':
     args = get_args()
     create_dirs()
+    unzip_dataset()
     # load data
     image_array_train, label_array_train, label_array_inst_train = load_data(variant='train')
     image_array_val, label_array_val, label_array_inst_val = load_data(variant='val')

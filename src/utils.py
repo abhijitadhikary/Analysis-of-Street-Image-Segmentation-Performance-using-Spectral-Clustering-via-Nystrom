@@ -5,6 +5,7 @@ import argparse
 import cv2
 from PIL import Image
 import torch
+import zipfile
 
 
 def get_args():
@@ -47,7 +48,18 @@ def create_dirs():
             for sub_dir_index in range(1, len(current_dir)):
                 current_path = os.path.join(current_path, current_dir[sub_dir_index])
         if not os.path.exists(current_path):
-            os.makedirs(current_path)
+            try:
+                os.makedirs(current_path)
+            except:
+                # implement to handle exception
+                pass
+
+def unzip_dataset():
+    data_path = os.path.join('..', 'data')
+    if not os.path.exists(os.path.join(data_path, 'idd20k_lite')):
+        zip_file_path = os.path.join(data_path, 'idd20k_lite.zip')
+        with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
+            zip_ref.extractall(data_path)
 
 def convert(source, min_value=0, max_value=1):
     '''
