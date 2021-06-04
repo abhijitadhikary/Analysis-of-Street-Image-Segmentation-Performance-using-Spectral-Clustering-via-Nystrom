@@ -57,9 +57,9 @@ def get_args():
     args.use_numpy_eigen_decompose = True
     args.dim_low = 8
     args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
-    args.train_condition = True,
-    args.val_condition = True,
-    args.test_condition = True,
+    args.train_condition = True
+    args.val_condition = True
+    args.test_condition = True
     args.save_stacked_title = False
     args.print_cluster_memberships = False
     return args
