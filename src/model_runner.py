@@ -22,12 +22,12 @@ def run(dataset, args, mode=None):
     # total number of images
     num_images = len(image_array)
 
-    for image_index in tqdm(range(300, num_images), leave=True):
+    for image_index in tqdm(range(num_images), leave=True):
         image = image_array[image_index]
         # cluster the image using Spectral Clustering
         clustered_image = run_spectral_clustering(image, args)
         # segment the image according to cluster mean/medians color values
-        segmented_image_pred = get_segmented_image(image, clustered_image, clustered_image.reshape(-1), args)
+        segmented_image_pred = get_segmented_image(image, clustered_image.reshape(-1), args)
 
         # print how many points belongs to each cluster
         if args.print_cluster_memberships:
@@ -37,7 +37,7 @@ def run(dataset, args, mode=None):
             # for train and val
             labels_image_gt = label_array[image_index]
             # segment the image using the ground truth labels
-            segmented_image_gt = get_segmented_image(image, labels_image_gt, labels_image_gt.reshape(-1), args)
+            segmented_image_gt = get_segmented_image(image, labels_image_gt.reshape(-1), args)
             # stack the three images horizontally
             stacked_image_horizontal = get_stacked_image_horizontal(image, segmented_image_gt, segmented_image_pred)
             # save the image

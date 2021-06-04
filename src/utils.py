@@ -13,7 +13,7 @@ def get_args():
     args = argparse.Namespace()
     args.seed = 0
     args.num_clusters = 8
-    args.centroid_type = 1 # 0: mean, 1: median
+    args.centroid_type = 0 # 0: mean, 1: median
     # args.num_clusters = 8
     args.sigma_color = 0.6 # 0.4
     args.sigma_distance = 5 # 20
@@ -25,7 +25,7 @@ def get_args():
     args.num_elements_flat = 0
     args.use_numpy_eigen_decompose = True
     args.dim_low = 100
-    args.color_weight_mode = 2 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
+    args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     args.train_condition = True,
     args.val_condition = True,
     args.test_condition = True,
@@ -199,68 +199,34 @@ def get_image_array(image, args):
 
     return image_array
 
-def get_segmented_image(image, clustered_image, clustered_labels, args):
+def get_segmented_image(image, clustered_labels, args):
     '''
     Returns a segmented image based on the supplied labels, either using median
     or mean each cluster
-    :param image : The input image of shape [height, width, num_channels]
-    :param clustered_image: The cluster label of each pixel in the shape of the image [height, width]
+    :param image: The input image of shape [height, width, num_channels]
     :param clustered_labels: The cluster label of each pixel flattened, shape = [height*width,]
     :param args: The arguments with all the hyper-parameters
-    :param use_median: Use median value as the cluster intensity or not (False -> mean is used, True -> median is used)
-    :return segmented_image_pred:  The segmented image of shape [height, width, num_channels]
+    :return: The segmented image of shape [height, width, num_channels]
     '''
     image = convert(image, 0, 1)
-    # change 0 entries to a small number
-    image = np.where(image == 0, 1/255, image)
-    label_values = np.unique(clustered_labels)
-    segmented_image = np.zeros_like(image)
-    if args.centroid_type == 1:
-        factor = 255 / (np.max(image) - np.min(image))
-    else:
-        factor = 1
+    image_flat = image.reshape(-1, args.num_channels)
 
-    if args.num_channels == 3:
-        for index in label_values:
-            current_mask = (clustered_image == index).astype(np.float64)
-            current_segment = image * np.repeat(current_mask[..., None], args.num_channels, axis=2) * factor
+    label_list = np.unique(clustered_labels)
+    for current_label in label_list:
+        selected_indices = np.where(clustered_labels == current_label)
 
-            for channel_index in range(args.num_channels):
-                current_channel = current_segment[:, :, channel_index]
-                cluster_total = np.count_nonzero(current_channel)
-
-                if args.centroid_type == 1:
-                    non_zero_current_channel = np.sort(
-                        current_channel[current_channel != 0])  # Sort values to find median
-                    cluster_median = non_zero_current_channel[cluster_total // 2]  # Median of non-0 elements
-                    current_segment[:, :, channel_index] = np.where(current_channel > 0, cluster_median,
-                                                                    current_channel)
-                else:
-                    cluster_sum = np.sum(current_channel)
-                    cluster_mean = cluster_sum / cluster_total
-                    current_segment[:, :, channel_index] = np.where(current_segment[:, :, channel_index] > 0,
-                                                                    cluster_mean,
-                                                                    current_segment[:, :, channel_index])
-                segmented_image[:, :, channel_index] += current_segment[:, :, channel_index].astype(np.float64)
-
-    elif args.num_channels == 1:
-        for index in label_values:
-            current_mask = (clustered_image == index).astype(np.float64)
-            current_segment = image * current_mask * factor
-
-            current_channel = current_segment
-            cluster_total = np.count_nonzero(current_channel)
-            if args.centroid_type == 1:
-                non_zero_current_segment = current_segment[current_segment != 0]
-                cluster_center = non_zero_current_segment[cluster_total // 2]
-                current_segment = np.where(current_segment > 0, cluster_center, current_segment)
-            else:
-                cluster_sum = np.sum(current_channel)
-                cluster_mean = cluster_sum / cluster_total
-                current_segment = np.where(current_segment > 0, cluster_mean, current_segment)
-            segmented_image += current_segment.astype(np.float64)  # * np.random.rand(1)
-
-    return segmented_image
+        if args.centroid_type == 0:
+            # mean value
+            centroid = np.mean(image_flat[selected_indices], axis=0)
+        elif args.centroid_type == 1:
+            # median value
+            centroid = np.mean(image_flat[selected_indices], axis=0)
+        else:
+            raise NotImplementedError('Invalid centroid type selected, choose between 0 and 1')
+        image_flat[selected_indices] = centroid
+    image_flat = image_flat.reshape(image.shape)
+    image_flat = convert(image_flat, 0, 255)
+    return image_flat
 
 def get_dummy_image():
     '''
