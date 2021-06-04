@@ -179,23 +179,13 @@ def get_image_array(image, args):
         :param args: The arguments with all the hyper-parameters
         :return image_array: flattened image array of shape [height*width, num_channels + 2]
         '''
+    image_flat = image.reshape(args.height*args.width, -1)
     image_array = np.zeros((args.num_elements_flat, (args.num_channels+2)))
+    image_array[:, 0:3] = image_flat
 
-    image_array_index = 0
-    for index_row in range(args.height):
-        for index_col in range(args.width):
-            current_pixel = image[index_row, index_col]
-            if args.num_channels == 3:
-                image_array[image_array_index] = np.array([current_pixel[0],
-                                                           current_pixel[1],
-                                                           current_pixel[2],
-                                                           index_row,
-                                                           index_col])
-            elif args.num_channels == 1:
-                image_array[image_array_index] = np.array([current_pixel,
-                                                           index_row,
-                                                           index_col])
-            image_array_index += 1
+    # coordinate information
+    image_array[:, 3] = np.repeat(np.arange(args.height), args.width)
+    image_array[:, 4] = np.tile(np.arange(args.width), args.height)
 
     return image_array
 
