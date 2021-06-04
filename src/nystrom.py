@@ -31,10 +31,14 @@ def run_nystrom(weight_matrix_partial, indices_random_low_dim):
     Asi = sqrtm(pinv_A)
 
     Q = A + Asi @ B @ B.T @ Asi
-    U, L, T = np.linalg.svd(Q)
 
+    svd_convrged = True
+    try:
+        U, L, T = np.linalg.svd(Q)
+    except np.linalg.LinAlgError as error:
+        svd_convrged = False
     L = np.diag(L)
     V = np.hstack((A, B)).T @ Asi @ U @ np.linalg.pinv(np.sqrt(L))
     # ignore the comlpex portion if there is any
     V = np.real(V)
-    return V
+    return V, svd_convrged

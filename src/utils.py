@@ -5,7 +5,6 @@ import argparse
 import cv2
 import zipfile
 
-
 def get_args():
     '''
     Returns all the hyper-parameters
@@ -179,7 +178,7 @@ def get_image_array(image, args):
         :param args: The arguments with all the hyper-parameters
         :return image_array: flattened image array of shape [height*width, num_channels + 2]
         '''
-    image_array = np.zeros((args.num_elements_flat, (args.num_channels + 2)))
+    image_array = np.zeros((args.num_elements_flat, (args.num_channels+2)))
 
     image_array_index = 0
     for index_row in range(args.height):

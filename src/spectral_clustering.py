@@ -88,7 +88,6 @@ def get_distance_weight(image_array, image_low, args):
         np.expand_dims(image_array[:, args.num_channels:], axis=1) - image_low[:, args.num_channels:], axis=-1, ord=2)
     return distance_weight
 
-
 def get_weight_martix_partial(image_array, indices_random_low_dim, args):
     '''
     Returns a dim_low x len(image_array) weight matrix
@@ -163,14 +162,28 @@ def run_spectral_clustering(image_real, args):
     # start = time()
     image_scaled, args = process_image_attributes(image_real, args)
     image_array = get_image_array(image_scaled, args)
-    # k (dim_low) random indices for nystrom
-    indices_random_low_dim = get_random_indices(args.num_elements_flat, args.dim_low)
 
-    # get weight matrix corresponding to the randomly generated k indices
-    weight_matrix_partial = get_weight_martix_partial(image_array, indices_random_low_dim, args)
+    loop_condition = True
+    seed = args.seed
 
-    # calculate eigenvectors using the Nystrom method
-    eigen_vectors_dim_low = run_nystrom(weight_matrix_partial, indices_random_low_dim)
+    while loop_condition:
+        # k (dim_low) random indices for nystrom
+        indices_random_low_dim = get_random_indices(args.num_elements_flat, args.dim_low)
+
+        # get weight matrix corresponding to the randomly generated k indices
+        weight_matrix_partial = get_weight_martix_partial(image_array, indices_random_low_dim, args)
+
+        # calculate eigenvectors using the Nystrom method
+        eigen_vectors_dim_low, svd_convrged = run_nystrom(weight_matrix_partial, indices_random_low_dim)
+
+        if svd_convrged:
+            # if converges, reset the seed
+            np.random.seed(args.seed)
+            loop_condition = False
+        else:
+            # if svd does not converge in Nystrom, increase the seed by 1 and re-run the algorithm
+            seed += 1
+            np.random.seed(seed)
 
     # extract the smallest k eigen vectors (ingoring the first one)
     eigen_vectors_k = get_k_smallest_eigen_vectors(eigen_vectors_dim_low, args)
