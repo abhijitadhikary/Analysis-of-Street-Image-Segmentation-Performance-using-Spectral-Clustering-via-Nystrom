@@ -48,9 +48,9 @@ def get_args():
     args.num_clusters = 8
     args.dim_low = 8
     args.centroid_type = 1 # 0: mean, 1: median
-    args.color_weight_mode = 2 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG (Not implemented)
-    args.sigma_color = 0.8 # 0.4, 0.5 BEST (RGB): 0.8 # increasing creates superpixels, decreasing increases detail
-    args.sigma_distance = 18 # 20, 16 BEST (RGB): 17# decreasing causes segments to be highly localized
+    args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG (Not implemented)
+    args.sigma_color = 0.8 # BEST: 0.8 (RGB), 0.8 (HSV) # increasing creates superpixels, decreasing increases detail
+    args.sigma_distance = 17 # BEST (RGB): 17, 18 (HSV) # decreasing causes segments to be highly localized
     args.height = 100
     args.width = 100
     args.save_path_stacked = os.path.join('..', 'results', 'stacked')

@@ -24,8 +24,8 @@ def run(dataset, args, mode=None):
     num_images = len(image_array)
 
     for image_index in tqdm(range(num_images), leave=True):
-        if image_index > 10:
-            break
+        # if image_index > 10:
+        #     break
         image = image_array[image_index]
         # cluster the image using Spectral Clustering
         clustered_image = run_spectral_clustering(image, args)

@@ -4,6 +4,7 @@ import cv2
 from tqdm import tqdm
 from scipy.special import comb
 import matplotlib.pyplot as plt
+import seaborn as sn
 
 def get_mean_absolute_error(image_a, image_b):
     '''
@@ -182,13 +183,13 @@ def get_voi_score(array_a, array_b):
 
     res = abs(sigma)
 
-    p = array_a.shape[1] / n
-    q = array_b.shape[1] / n
-
-    r_all = np.array([len(list(set(row_a) & set(row_b)))/n for row_a, row_b in zip(array_a, array_b)])
-    r_all = r_all.reshape(-1, 1)
-    r_all = r_all @ r_all.T
-    res_ = np.abs(np.sum(np.where(r_all > 0.0, r_all * (np.log2(r_all / p) + np.log2(r_all / q)), 0)))
+    # p = array_a.shape[1] / n
+    # q = array_b.shape[1] / n
+    #
+    # r_all = np.array([len(list(set(row_a) & set(row_b)))/n for row_a, row_b in zip(array_a, array_b)])
+    # r_all = r_all.reshape(-1, 1)
+    # r_all = r_all @ r_all.T
+    # res_ = np.abs(np.sum(np.where(r_all > 0.0, r_all * (np.log2(r_all / p) + np.log2(r_all / q)), 0)))
 
     return res
 
@@ -271,10 +272,12 @@ def print_mean_and_median(mean, median, metric_type):
     '''
     print(f'{metric_type}\t\t{mean:.4f}\t\t{median:.4f}')
 
-def print_interclass_iou(array):
-    plt.figure(figsize=(5, 5))
-    plt.imshow(array)
-    plt.title('Inter-class IOU')
+def print_interclass_iou(array, mode):
+    # plt.figure(figsize=(5, 5))
+    sn.set(font_scale=1.2)
+    sn.heatmap(array, annot=True, annot_kws={"size": 10})
+    # plt.imshow(array)
+    plt.title(f'Inter-class IOU: {mode.upper()}')
     plt.show()
 
 def run_evaluation(mode, use_color_eval=False):
@@ -398,4 +401,4 @@ def run_evaluation(mode, use_color_eval=False):
     # print_mean_and_median(voi_mean, voi_median, 'VoI ')
     print_mean_and_median(gce_mean, gce_median, 'GCE ')
     if mode in ['train', 'val']:
-        print_interclass_iou(interclass_iou_list)
+        print_interclass_iou(interclass_iou_list, mode)
