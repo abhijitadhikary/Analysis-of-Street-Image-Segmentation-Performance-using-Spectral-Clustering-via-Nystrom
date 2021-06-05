@@ -5,6 +5,7 @@ To run in the default settings please follow the following steps:
 1. Paster the `idd20k_lite.zip` file in the `./data` ditectory.
 2. Go into the `./src/` directory and run `python main.py` to run the project using default hyperparameters.
 3. Hyperparameters can be changed from the `./src/utils.py` file's `get_args()` function.
+4. To separately evaluate the model run `python evaluate_results.py` from inside the `./src/` directory.
 
 *** It is recommended to run the project in a Windows environment as 
 all the functionalities were tested in a Windows machine.
