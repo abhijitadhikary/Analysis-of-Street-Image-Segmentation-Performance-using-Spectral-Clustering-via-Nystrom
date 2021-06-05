@@ -209,6 +209,40 @@ def get_gce_score(array_a, array_b):
 
     return gce
 
+def get_interclass_iou_score(array_a, array_b):
+    '''
+    Returns the interclass intersection over union scores betwen two arrays/images
+    :param array_a:
+    :param array_b:
+    :return:
+    '''
+    unique_vals_a = np.unique(array_a)
+    unique_vals_b = np.unique(array_b)
+    num_unique_a = len(unique_vals_a)
+    num_unique_b = len(unique_vals_b)
+
+    num_pixels = array_b.shape[2] * array_b.shape[3]
+    score_array = np.zeros((num_unique_a, num_unique_b))
+
+    for index_a in range(num_unique_a):
+        for index_b in range(num_unique_b):
+            segment_a = (array_a == unique_vals_a[index_a])
+            segment_b = (array_b == unique_vals_b[index_b])
+
+            method = 0
+            # bad
+            if method == 0:
+                intersection = (segment_a * segment_b) # only looks into the true values
+                intersection_score = np.sum(intersection)
+                union_score = (np.sum(segment_a) + np.sum(segment_b)) - intersection_score
+                score = (intersection_score / (union_score+1e-6))
+                score_array[index_a, index_b] = score
+            elif method == 1:
+                intersection = (segment_a == segment_b)  # looks into both true and false values
+                score = np.sum(intersection) / num_pixels
+                score_array[index_a, index_b] = score
+    return score_array
+
 def get_mean(array):
     '''
     Returns the mean value of an array
@@ -235,6 +269,12 @@ def print_mean_and_median(mean, median, metric_type):
     '''
     print(f'{metric_type}\t\t{mean:.4f}\t\t{median:.4f}')
 
+def print_interclass_iou(array):
+    plt.figure(figsize=(5, 5))
+    plt.imshow(array)
+    plt.title('Inter-class IOU')
+    plt.show()
+
 def run_evaluation(mode, use_color_eval=False):
     '''
     Given a mode (train, val, test) the function runs evaluation metrics and prints the mean results
@@ -257,6 +297,7 @@ def run_evaluation(mode, use_color_eval=False):
     pri_list = []
     voi_list = []
     gce_list = []
+    interclass_iou_list = np.zeros((8, 8))
     print(f'Running evaluation metrics in mode {mode.upper()} .....')
     for index_filename, curent_filename in tqdm(enumerate(filename_list), leave=True, total=len(filename_list)):
         image_path_full = os.path.join(path_stacked, curent_filename)
@@ -324,6 +365,10 @@ def run_evaluation(mode, use_color_eval=False):
         # variation_of_information = get_voi_score(label_gt, label_pred)
         # voi_list.append(variation_of_information)
 
+        interclass_iou_score = get_interclass_iou_score(label_gt, label_pred)
+        height, width = interclass_iou_score.shape
+        if mode in ['train', 'val']:
+            interclass_iou_list[:height, :width] += interclass_iou_score
 
     if len(mae_list) == 0:
         print(f'Exiting evaluation. No compatible files found to run evaluation metrics in {path_stacked}')
@@ -337,6 +382,9 @@ def run_evaluation(mode, use_color_eval=False):
     voi_mean, voi_median = get_mean(voi_list), get_median(voi_list)
     gce_mean, gce_median = get_mean(gce_list), get_median(gce_list)
 
+    if mode in ['train', 'val']:
+        interclass_iou_list /= len(mae_list)
+
     num_samples = len(mae_list)
     print(f'Total number of samples in mode {mode.upper()}: {num_samples}')
     print(f'Metric\t\tMean\t\tMedian')
@@ -347,3 +395,5 @@ def run_evaluation(mode, use_color_eval=False):
     print_mean_and_median(pri_mean, pri_median, 'PRI ')
     print_mean_and_median(voi_mean, voi_median, 'VoI ')
     print_mean_and_median(gce_mean, gce_median, 'GCE ')
+    if mode in ['train', 'val']:
+        print_interclass_iou(interclass_iou_list)
