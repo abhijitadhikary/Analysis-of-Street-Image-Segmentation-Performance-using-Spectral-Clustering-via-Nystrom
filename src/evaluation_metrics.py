@@ -158,6 +158,51 @@ def get_PRI_score(clusters, classes):
     tn = comb(len(A), 2) - tp - fp - fn
     return (tp + tn) / (tp + fp + fn + tn)
 
+def get_voi_score(array_a, array_b):
+    '''
+    Returns the variaiton of information metric between two arrays/images
+    The implementation followed from:
+    https://gist.github.com/jwcarr/626cbc80e0006b526688
+    :param array_a:
+    :param array_b:
+    :return:
+    '''
+    array_a = np.squeeze(np.squeeze(array_a, axis=0), axis=0)
+    array_b = np.squeeze(np.squeeze(array_b, axis=0), axis=0)
+    n = len(array_a.reshape(-1))
+
+    sigma = 0.0
+    for x in array_a:
+        p = len(x) / n
+        for y in array_b:
+            q = len(y) / n
+            r = len(set(x) & set(y)) / n
+            if r > 0.0:
+                sigma += r * (np.log(r / p) + np.log(r / q))
+
+    res = abs(sigma)
+
+    # p = array_a.shape[1] / n
+    # q = array_b.shape[1] / n
+    #
+    # r = len(np.unique(array_a, axis=1) & np.unique(array_a, axis=1)) / n
+    #
+    # res_ = 1
+    return res
+
+def get_gce_score(array_a, array_b):
+
+    N = np.sum(np.stack((array_a, array_b)))
+
+    marginal_1 = np.sum(array_a)
+    marginal_2 = np.sum(array_b)
+
+    E1 = 1 - np.sum(np.sum(array_a*array_a) / (marginal_1 + (marginal_1 == 0))) / N
+    E2 = 1 - np.sum(np.sum(array_b*array_b) / (marginal_2 + (marginal_2 == 0))) / N
+    gce = min(E1, E2)
+
+    return gce
+
 def get_mean(array):
     return np.mean(np.array(array))
 
@@ -177,23 +222,25 @@ def run_evaluation(mode, use_color_eval=False):
     try:
         filename_list = os.listdir(path_stacked)
     except FileNotFoundError as error:
-        print(f'Exiting evaluation. Directory not found: {path_stacked}')
+        print(f'Exiting evaluation. Directory not found: {path_stacked} in mode {mode.upper()}')
         return
     if len(filename_list) == 0:
-        print(f'Exiting evaluation. No files exist in directory: {path_stacked}')
+        print(f'Exiting evaluation. No files exist in directory: {path_stacked} in mode {mode.upper()}')
         return
     mae_list = []
     psnr_list = []
     iou_list = []
     dice_list = []
     pri_list = []
+    voi_list = []
+    gce_list = []
     print(f'Running evaluation for mode {mode.upper()} .....')
     for index_filename, curent_filename in tqdm(enumerate(filename_list), leave=True, total=len(filename_list)):
         image_path_full = os.path.join(path_stacked, curent_filename)
         try:
             image_stacked = cv2.cvtColor(cv2.imread(image_path_full), cv2.COLOR_BGR2RGB)
         except cv2.error as error:
-            print(f'Invalid file format: {image_path_full}')
+            print(f'Invalid file format: {image_path_full} in mode {{mode.upper()}}')
             continue
 
         height, width_stacked, num_channels = image_stacked.shape
@@ -237,12 +284,18 @@ def run_evaluation(mode, use_color_eval=False):
         intersection_over_union = metrics_np(label_gt, label_pred, metric_name="iou", metric_type="soft")
         dice_score = metrics_np(label_gt, label_pred, metric_name="dice", metric_type="soft")
         probabilistic_rand_index = get_PRI_score(label_gt, label_pred)
+        gce_score = get_gce_score(label_gt, label_pred)
+
+        # takes a long time to run
+        variation_of_information = get_voi_score(label_gt, label_pred)
 
         mae_list.append(mean_absolute_error)
         psnr_list.append(peak_signal_to_noise_ratio)
         iou_list.append(intersection_over_union)
         dice_list.append(dice_score)
         pri_list.append(probabilistic_rand_index)
+        voi_list.append(variation_of_information)
+        gce_list.append(gce_score)
 
     if len(mae_list) == 0:
         print(f'Exiting evaluation. No compatible files found to run evaluation metrics in {path_stacked}')
@@ -253,12 +306,16 @@ def run_evaluation(mode, use_color_eval=False):
     iou_mean, iou_median = get_mean(iou_list), get_median(iou_list)
     dice_mean, dice_median = get_mean(dice_list), get_median(dice_list)
     pri_mean, pri_median = get_mean(pri_list), get_median(pri_list)
+    voi_mean, voi_median = get_mean(voi_list), get_median(voi_list)
+    gce_mean, gce_median = get_mean(gce_list), get_median(gce_list)
 
     num_samples = len(mae_list)
     print(f'Total number of samples in mode {mode.upper()}: {num_samples}')
     print(f'Metric\t\tMean\t\tMedian')
-    print_mean_and_median(mae_mean, mae_median, 'MAE')
+    print_mean_and_median(mae_mean, mae_median, 'MAE ')
     print_mean_and_median(psnr_mean, psnr_median, 'PSNR')
-    print_mean_and_median(iou_mean, iou_median, 'IOU')
+    print_mean_and_median(iou_mean, iou_median, 'IOU ')
     print_mean_and_median(dice_mean, dice_median, 'DICE')
-    print_mean_and_median(pri_mean, pri_median, 'PRI')
+    print_mean_and_median(pri_mean, pri_median, 'PRI ')
+    print_mean_and_median(voi_mean, voi_median, 'VoI ')
+    print_mean_and_median(gce_mean, gce_median, 'GCE ')
