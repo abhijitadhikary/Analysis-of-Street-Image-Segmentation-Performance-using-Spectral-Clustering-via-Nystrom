@@ -182,12 +182,14 @@ def get_voi_score(array_a, array_b):
 
     res = abs(sigma)
 
-    # p = array_a.shape[1] / n
-    # q = array_b.shape[1] / n
-    #
-    # r = len(np.unique(array_a, axis=1) & np.unique(array_a, axis=1)) / n
-    #
-    # res_ = 1
+    p = array_a.shape[1] / n
+    q = array_b.shape[1] / n
+
+    r_all = np.array([len(list(set(row_a) & set(row_b)))/n for row_a, row_b in zip(array_a, array_b)])
+    r_all = r_all.reshape(-1, 1)
+    r_all = r_all @ r_all.T
+    res_ = np.abs(np.sum(np.where(r_all > 0.0, r_all * (np.log2(r_all / p) + np.log2(r_all / q)), 0)))
+
     return res
 
 def get_gce_score(array_a, array_b):
@@ -362,8 +364,8 @@ def run_evaluation(mode, use_color_eval=False):
         gce_list.append(gce_score)
 
         # takes a long time to run
-        # variation_of_information = get_voi_score(label_gt, label_pred)
-        # voi_list.append(variation_of_information)
+        variation_of_information = get_voi_score(label_gt, label_pred)
+        voi_list.append(variation_of_information)
 
         interclass_iou_score = get_interclass_iou_score(label_gt, label_pred)
         height, width = interclass_iou_score.shape
