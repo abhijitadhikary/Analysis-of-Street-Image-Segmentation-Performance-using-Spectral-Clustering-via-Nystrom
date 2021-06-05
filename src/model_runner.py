@@ -1,5 +1,6 @@
 from utils import print_cluster_memberships, get_segmented_image, get_stacked_image_horizontal, save_image
 from spectral_clustering import run_spectral_clustering
+from evaluation_metrics import run_evaluation
 import os
 from tqdm import tqdm
 
@@ -51,3 +52,7 @@ def run(dataset, args, mode=None):
             save_image(stacked_image_horizontal, save_path_stacked_full, title)
         else:
             raise NotImplementedError('Invalid value for mode')
+
+    if args.run_evaluation_metric:
+        run_evaluation(mode)
+

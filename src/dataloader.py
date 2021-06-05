@@ -15,14 +15,12 @@ def get_image_full_path(dir_path, mode):
         image_full_path_list_inst = []
     sub_dir_name_list = os.listdir(dir_path)
     for sub_dir_name in sub_dir_name_list:
-        # print(sub_dir_name)
         current_dir_path = os.path.join(dir_path, sub_dir_name)
         if not os.path.isdir(current_dir_path):
             continue
         file_name_list = os.listdir(current_dir_path)
         for file_name in file_name_list:
             image_full_path = os.path.join(current_dir_path, file_name)
-            # print(image_full_path)
             # if inst label
             if mode == 'label' and 'inst' in file_name:
                 image_full_path_list_inst.append(image_full_path)
@@ -86,5 +84,4 @@ def get_datasets():
     dataset_train = prepare_dataset(mode='train')
     dataset_val = prepare_dataset(mode='val')
     dataset_test = prepare_dataset(mode='test')
-
     return dataset_train, dataset_val, dataset_test

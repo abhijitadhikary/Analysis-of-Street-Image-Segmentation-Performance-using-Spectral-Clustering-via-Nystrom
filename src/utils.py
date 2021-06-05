@@ -63,6 +63,7 @@ def get_args():
     args.test_condition = True
     args.save_stacked_title = False
     args.print_cluster_memberships = False
+    args.run_evaluation_metric = True
     return args
 
 def setup_model_parameters():
@@ -317,42 +318,3 @@ def save_image(image, image_path_full, title=None):
         image = image.astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(image_path_full, image)
-
-def get_IOU(ground_truth, predicted):
-    # for channel_index in range(ground_truth.shape[2]):
-    #     unique_values = np.unique(ground_truth[:, :, channel_index])
-    #     intersection = np.logical_and(ground_truth[:, :, channel_index], predicted[:, :, channel_index])
-    #     union = np.logical_or(ground_truth[:, :, channel_index], predicted[:, :, channel_index])
-    #     iou = np.sum(intersection) / np.sum(union)
-    #     print(iou)
-
-    unique_color_values = np.unique(ground_truth.reshape(-1, ground_truth.shape[2]), axis=0)
-
-    return unique_color_values
-
-# def get_IOU(label, pred, num_classes=8):
-#     pred = torch.tensor(pred)
-#     pred = pred.permute(2, 0, 1)
-#     pred = torch.softmax(pred, dim=1)
-#     pred = torch.argmax(pred, dim=1).squeeze(1)
-#     iou_list = list()
-#     present_iou_list = list()
-#
-#     pred = pred.view(-1)
-#     label = torch.tensor(label)
-#     label = label.view(-1)
-#     # Note: Following for loop goes from 0 to (num_classes-1)
-#     # and ignore_index is num_classes, thus ignore_index is
-#     # not considered in computation of IoU.
-#     for sem_class in range(num_classes):
-#         pred_inds = (pred == sem_class)
-#         target_inds = (label == sem_class)
-#         if target_inds.long().sum().item() == 0:
-#             iou_now = float('nan')
-#         else:
-#             intersection_now = (pred_inds[target_inds]).long().sum().item()
-#             union_now = pred_inds.long().sum().item() + target_inds.long().sum().item() - intersection_now
-#             iou_now = float(intersection_now) / float(union_now)
-#             present_iou_list.append(iou_now)
-#         iou_list.append(iou_now)
-#     return np.mean(present_iou_list)

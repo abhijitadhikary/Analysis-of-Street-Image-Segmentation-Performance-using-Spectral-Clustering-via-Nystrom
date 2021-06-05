@@ -1,4 +1,16 @@
 import numpy as np
+import os
+import cv2
+from tqdm import tqdm
+
+def get_mean_absolute_error(image_a, image_b):
+    mean_absolute_error = np.mean(np.abs(image_a - image_b))
+    return mean_absolute_error
+
+def get_peak_signal_to_noise_ratio(image_a, image_b):
+    mean_absolute_error = get_mean_absolute_error(image_a, image_b)
+    peak_signal_to_noise_ratio = 20 * np.log10(255 ** 2 / mean_absolute_error)
+    return peak_signal_to_noise_ratio
 
 def metrics_np(y_true, y_pred, metric_name,
     metric_type='standard', drop_last = True, mean_per_class=False, verbose=False):
@@ -112,3 +124,62 @@ def mean_dice_np(y_true, y_pred, **kwargs):
     Calls metrics_np(y_true, y_pred, metric_name='dice'), see there for allowed kwargs.
     """
     return metrics_np(y_true, y_pred, metric_name='dice', **kwargs)
+
+def run_evaluation(mode):
+    path_stacked = os.path.join('..', 'output', 'stacked', mode)
+    filename_list = os.listdir(path_stacked)
+
+    mae_list = []
+    psnr_list = []
+    iou_list = []
+    dice_list = []
+    print(f'Running evaluation for mode {mode.upper()} .....')
+    for index_filename, curent_filename in tqdm(enumerate(filename_list), leave=True, total=len(filename_list)):
+        image_path_full = os.path.join(path_stacked, curent_filename)
+        image_stacked = cv2.cvtColor(cv2.imread(image_path_full), cv2.COLOR_BGR2RGB)
+
+        height, width_stacked, num_channels = image_stacked.shape
+
+        if width_stacked > 640:
+            width = width_stacked // 3
+            image = image_stacked[:, :width]
+            label_gt = image_stacked[:, width:width * 2]
+            label_pred = image_stacked[:, width * 2:]
+            label_gt = np.expand_dims(np.transpose(label_gt, (2, 1, 0)), axis=0)
+            label_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+        else:
+            width = width_stacked // 2
+            image = image_stacked[:, :width]
+            label_pred = image_stacked[:, width:width*2]
+            label_gt = np.expand_dims(np.transpose(image, (2, 1, 0)), axis=0)
+            label_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+
+        mean_absolute_error = get_mean_absolute_error(label_gt, label_pred)
+        peak_signal_to_noise_ratio = get_peak_signal_to_noise_ratio(label_gt, label_pred)
+        intersection_over_union = metrics_np(label_gt, label_pred, metric_name="iou", metric_type="soft")
+        dice = metrics_np(label_gt, label_pred, metric_name="dice", metric_type="soft")
+
+        mae_list.append(mean_absolute_error)
+        psnr_list.append(peak_signal_to_noise_ratio)
+        iou_list.append(intersection_over_union)
+        dice_list.append(dice)
+
+    def get_mean(array):
+        return np.mean(np.array(array))
+
+    def get_median(array):
+        return np.median(np.array(array))
+
+    def print_mean_and_median(mean, median, metric_type):
+        print(f'{metric_type}\t\t{mean:.4f}\t\t{median:.4f}')
+
+    mae_mean, mae_median = get_mean(mae_list), get_median(mae_list)
+    psnr_mean, psnr_median = get_mean(psnr_list), get_median(psnr_list)
+    iou_mean, iou_median = get_mean(iou_list), get_median(iou_list)
+    dice_mean, dice_median = get_mean(dice_list), get_median(dice_list)
+
+    print(f'Metric\t\tMean\t\tMedian')
+    print_mean_and_median(mae_mean, mae_median, 'MAE')
+    print_mean_and_median(psnr_mean, psnr_median, 'PSNR')
+    print_mean_and_median(iou_mean, iou_median, 'IOU')
+    print_mean_and_median(dice_mean, dice_median, 'DICE')
