@@ -4,10 +4,22 @@ import cv2
 from tqdm import tqdm
 
 def get_mean_absolute_error(image_a, image_b):
+    '''
+    Returns the mean absolute error between two arrays
+    :param image_a:
+    :param image_b:
+    :return:
+    '''
     mean_absolute_error = np.mean(np.abs(image_a - image_b))
     return mean_absolute_error
 
 def get_peak_signal_to_noise_ratio(image_a, image_b):
+    '''
+    Returns the PSNR value between two arrays of images
+    :param image_a:
+    :param image_b:
+    :return:
+    '''
     mean_absolute_error = get_mean_absolute_error(image_a, image_b)
     peak_signal_to_noise_ratio = 20 * np.log10(255 ** 2 / mean_absolute_error)
     return peak_signal_to_noise_ratio
@@ -125,10 +137,30 @@ def mean_dice_np(y_true, y_pred, **kwargs):
     """
     return metrics_np(y_true, y_pred, metric_name='dice', **kwargs)
 
-def run_evaluation(mode):
-    path_stacked = os.path.join('..', 'output', 'stacked', mode)
-    filename_list = os.listdir(path_stacked)
+def get_mean(array):
+    return np.mean(np.array(array))
 
+def get_median(array):
+    return np.median(np.array(array))
+
+def print_mean_and_median(mean, median, metric_type):
+    print(f'{metric_type}\t\t{mean:.4f}\t\t{median:.4f}')
+
+def run_evaluation(mode):
+    '''
+    Given a mode (train, val, test) the function runs evaluation metrics and prints the mean results
+    :param mode:
+    :return:
+    '''
+    path_stacked = os.path.join('..', 'output', 'stacked', mode)
+    try:
+        filename_list = os.listdir(path_stacked)
+    except FileNotFoundError as error:
+        print(f'Exiting evaluation. Directory not found: {path_stacked}')
+        return
+    if len(filename_list) == 0:
+        print(f'Exiting evaluation. No files exist in directory: {path_stacked}')
+        return
     mae_list = []
     psnr_list = []
     iou_list = []
@@ -136,7 +168,11 @@ def run_evaluation(mode):
     print(f'Running evaluation for mode {mode.upper()} .....')
     for index_filename, curent_filename in tqdm(enumerate(filename_list), leave=True, total=len(filename_list)):
         image_path_full = os.path.join(path_stacked, curent_filename)
-        image_stacked = cv2.cvtColor(cv2.imread(image_path_full), cv2.COLOR_BGR2RGB)
+        try:
+            image_stacked = cv2.cvtColor(cv2.imread(image_path_full), cv2.COLOR_BGR2RGB)
+        except cv2.error as error:
+            print(f'Invalid file format: {image_path_full}')
+            continue
 
         height, width_stacked, num_channels = image_stacked.shape
 
@@ -164,20 +200,17 @@ def run_evaluation(mode):
         iou_list.append(intersection_over_union)
         dice_list.append(dice)
 
-    def get_mean(array):
-        return np.mean(np.array(array))
-
-    def get_median(array):
-        return np.median(np.array(array))
-
-    def print_mean_and_median(mean, median, metric_type):
-        print(f'{metric_type}\t\t{mean:.4f}\t\t{median:.4f}')
+    if len(mae_list) == 0:
+        print(f'Exiting evaluation. No compatible files found to run evaluation metrics in {path_stacked}')
+        return
 
     mae_mean, mae_median = get_mean(mae_list), get_median(mae_list)
     psnr_mean, psnr_median = get_mean(psnr_list), get_median(psnr_list)
     iou_mean, iou_median = get_mean(iou_list), get_median(iou_list)
     dice_mean, dice_median = get_mean(dice_list), get_median(dice_list)
 
+    num_samples = len(mae_list)
+    print(f'Total number of samples in mode {mode.upper()}: {num_samples}')
     print(f'Metric\t\tMean\t\tMedian')
     print_mean_and_median(mae_mean, mae_median, 'MAE')
     print_mean_and_median(psnr_mean, psnr_median, 'PSNR')
