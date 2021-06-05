@@ -2,6 +2,8 @@ import numpy as np
 import os
 import cv2
 from tqdm import tqdm
+from scipy.special import comb
+import matplotlib.pyplot as plt
 
 def get_mean_absolute_error(image_a, image_b):
     '''
@@ -137,6 +139,25 @@ def mean_dice_np(y_true, y_pred, **kwargs):
     """
     return metrics_np(y_true, y_pred, metric_name='dice', **kwargs)
 
+def get_PRI_score(clusters, classes):
+    '''
+    The implementation followed from:
+    https://stackoverflow.com/questions/49586742/rand-index-function-clustering-performance-evaluation
+    :param clusters:
+    :param classes:
+    :return:
+    '''
+    clusters, classes = clusters.reshape(-1), classes.reshape(-1)
+    tp_plus_fp = comb(np.bincount(clusters), 2).sum()
+    tp_plus_fn = comb(np.bincount(classes), 2).sum()
+    A = np.c_[(clusters, classes)]
+    tp = sum(comb(np.bincount(A[A[:, 0] == i, 1]), 2).sum()
+             for i in set(clusters))
+    fp = tp_plus_fp - tp
+    fn = tp_plus_fn - tp
+    tn = comb(len(A), 2) - tp - fp - fn
+    return (tp + tn) / (tp + fp + fn + tn)
+
 def get_mean(array):
     return np.mean(np.array(array))
 
@@ -146,7 +167,7 @@ def get_median(array):
 def print_mean_and_median(mean, median, metric_type):
     print(f'{metric_type}\t\t{mean:.4f}\t\t{median:.4f}')
 
-def run_evaluation(mode):
+def run_evaluation(mode, use_color_eval=False):
     '''
     Given a mode (train, val, test) the function runs evaluation metrics and prints the mean results
     :param mode:
@@ -165,6 +186,7 @@ def run_evaluation(mode):
     psnr_list = []
     iou_list = []
     dice_list = []
+    pri_list = []
     print(f'Running evaluation for mode {mode.upper()} .....')
     for index_filename, curent_filename in tqdm(enumerate(filename_list), leave=True, total=len(filename_list)):
         image_path_full = os.path.join(path_stacked, curent_filename)
@@ -177,28 +199,50 @@ def run_evaluation(mode):
         height, width_stacked, num_channels = image_stacked.shape
 
         if width_stacked > 640:
+            # for train and eval mode, compares the predicted segmentations against the true segmentations
             width = width_stacked // 3
             image = image_stacked[:, :width]
-            label_gt = image_stacked[:, width:width * 2]
-            label_pred = image_stacked[:, width * 2:]
-            label_gt = np.expand_dims(np.transpose(label_gt, (2, 1, 0)), axis=0)
-            label_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+
+            if use_color_eval:
+                label_gt = image_stacked[:, width:width * 2]
+                label_pred = image_stacked[:, width * 2:]
+                label_gt = np.expand_dims(np.transpose(label_gt, (2, 1, 0)), axis=0)
+                label_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+            else:
+                label_gt = cv2.cvtColor(image_stacked[:, width:width * 2], cv2.COLOR_RGB2GRAY)
+                label_pred = cv2.cvtColor(image_stacked[:, width * 2:], cv2.COLOR_RGB2GRAY)
+                label_gt = np.expand_dims(label_gt, axis=0)
+                label_gt = np.expand_dims(label_gt, axis=0)
+                label_pred = np.expand_dims(label_pred, axis=0)
+                label_pred = np.expand_dims(label_pred, axis=0)
         else:
+            # for testing, although this does not make much sense to compare actual image with predicted labels
             width = width_stacked // 2
             image = image_stacked[:, :width]
-            label_pred = image_stacked[:, width:width*2]
-            label_gt = np.expand_dims(np.transpose(image, (2, 1, 0)), axis=0)
-            label_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+            if use_color_eval:
+                label_gt = np.expand_dims(np.transpose(image, (2, 1, 0)), axis=0)
+                label_pred = image_stacked[:, width:width*2]
+                label_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+            else:
+                label_gt = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+                label_pred = cv2.cvtColor(image_stacked[:, width:width * 2], cv2.COLOR_RGB2GRAY)
+                label_gt = np.expand_dims(label_gt, axis=0)
+                label_gt = np.expand_dims(label_gt, axis=0)
+                label_pred = np.expand_dims(label_pred, axis=0)
+                label_pred = np.expand_dims(label_pred, axis=0)
+
 
         mean_absolute_error = get_mean_absolute_error(label_gt, label_pred)
         peak_signal_to_noise_ratio = get_peak_signal_to_noise_ratio(label_gt, label_pred)
         intersection_over_union = metrics_np(label_gt, label_pred, metric_name="iou", metric_type="soft")
-        dice = metrics_np(label_gt, label_pred, metric_name="dice", metric_type="soft")
+        dice_score = metrics_np(label_gt, label_pred, metric_name="dice", metric_type="soft")
+        probabilistic_rand_index = get_PRI_score(label_gt, label_pred)
 
         mae_list.append(mean_absolute_error)
         psnr_list.append(peak_signal_to_noise_ratio)
         iou_list.append(intersection_over_union)
-        dice_list.append(dice)
+        dice_list.append(dice_score)
+        pri_list.append(probabilistic_rand_index)
 
     if len(mae_list) == 0:
         print(f'Exiting evaluation. No compatible files found to run evaluation metrics in {path_stacked}')
@@ -208,6 +252,7 @@ def run_evaluation(mode):
     psnr_mean, psnr_median = get_mean(psnr_list), get_median(psnr_list)
     iou_mean, iou_median = get_mean(iou_list), get_median(iou_list)
     dice_mean, dice_median = get_mean(dice_list), get_median(dice_list)
+    pri_mean, pri_median = get_mean(pri_list), get_median(pri_list)
 
     num_samples = len(mae_list)
     print(f'Total number of samples in mode {mode.upper()}: {num_samples}')
@@ -216,3 +261,4 @@ def run_evaluation(mode):
     print_mean_and_median(psnr_mean, psnr_median, 'PSNR')
     print_mean_and_median(iou_mean, iou_median, 'IOU')
     print_mean_and_median(dice_mean, dice_median, 'DICE')
+    print_mean_and_median(pri_mean, pri_median, 'PRI')
