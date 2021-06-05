@@ -191,6 +191,12 @@ def get_voi_score(array_a, array_b):
     return res
 
 def get_gce_score(array_a, array_b):
+    '''
+    Returns the global consistency error between two arrays/images
+    :param array_a:
+    :param array_b:
+    :return:
+    '''
 
     N = np.sum(np.stack((array_a, array_b)))
 
@@ -204,12 +210,29 @@ def get_gce_score(array_a, array_b):
     return gce
 
 def get_mean(array):
+    '''
+    Returns the mean value of an array
+    :param array:
+    :return:
+    '''
     return np.mean(np.array(array))
 
 def get_median(array):
+    '''
+    Returns the median value of an array
+    :param array:
+    :return:
+    '''
     return np.median(np.array(array))
 
 def print_mean_and_median(mean, median, metric_type):
+    '''
+    Prints the mean and median of a metric
+    :param mean:
+    :param median:
+    :param metric_type:
+    :return:
+    '''
     print(f'{metric_type}\t\t{mean:.4f}\t\t{median:.4f}')
 
 def run_evaluation(mode, use_color_eval=False):
