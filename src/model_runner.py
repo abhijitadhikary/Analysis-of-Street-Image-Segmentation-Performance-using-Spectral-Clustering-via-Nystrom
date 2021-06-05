@@ -24,6 +24,8 @@ def run(dataset, args, mode=None):
     num_images = len(image_array)
 
     for image_index in tqdm(range(num_images), leave=True):
+        if image_index > 10:
+            break
         image = image_array[image_index]
         # cluster the image using Spectral Clustering
         clustered_image = run_spectral_clustering(image, args)
@@ -52,7 +54,6 @@ def run(dataset, args, mode=None):
             save_image(stacked_image_horizontal, save_path_stacked_full, title)
         else:
             raise NotImplementedError('Invalid value for mode')
-
     if args.run_evaluation_metric:
         run_evaluation(mode)
 

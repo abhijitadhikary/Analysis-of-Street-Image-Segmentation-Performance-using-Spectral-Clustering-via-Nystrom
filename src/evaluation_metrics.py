@@ -364,8 +364,8 @@ def run_evaluation(mode, use_color_eval=False):
         gce_list.append(gce_score)
 
         # takes a long time to run
-        variation_of_information = get_voi_score(label_gt, label_pred)
-        voi_list.append(variation_of_information)
+        # variation_of_information = get_voi_score(label_gt, label_pred)
+        # voi_list.append(variation_of_information)
 
         interclass_iou_score = get_interclass_iou_score(label_gt, label_pred)
         height, width = interclass_iou_score.shape
@@ -381,7 +381,7 @@ def run_evaluation(mode, use_color_eval=False):
     iou_mean, iou_median = get_mean(iou_list), get_median(iou_list)
     dice_mean, dice_median = get_mean(dice_list), get_median(dice_list)
     pri_mean, pri_median = get_mean(pri_list), get_median(pri_list)
-    voi_mean, voi_median = get_mean(voi_list), get_median(voi_list)
+    # voi_mean, voi_median = get_mean(voi_list), get_median(voi_list)
     gce_mean, gce_median = get_mean(gce_list), get_median(gce_list)
 
     if mode in ['train', 'val']:
@@ -395,7 +395,7 @@ def run_evaluation(mode, use_color_eval=False):
     print_mean_and_median(iou_mean, iou_median, 'IOU ')
     print_mean_and_median(dice_mean, dice_median, 'DICE')
     print_mean_and_median(pri_mean, pri_median, 'PRI ')
-    print_mean_and_median(voi_mean, voi_median, 'VoI ')
+    # print_mean_and_median(voi_mean, voi_median, 'VoI ')
     print_mean_and_median(gce_mean, gce_median, 'GCE ')
     if mode in ['train', 'val']:
         print_interclass_iou(interclass_iou_list)

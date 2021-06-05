@@ -10,45 +10,47 @@ def get_args():
     Returns all the hyper-parameters
     :return args: the hyper-parameters
     '''
-    parser = argparse.ArgumentParser()
-    parser.add_argument('seed', type=int, default=0, help='sets the seed for program')
-    parser.add_argument('num_clusters', type=int, default=8, help='defines number of clusters')
-    parser.add_argument('centroid_type', type=int, default=1,
-                        help='defines the type of cluster: 0 for mean, 1 for median')
-    parser.add_argument('sigma_color', type=float, default=0.5, help='')  ##
-    parser.add_argument('sigma_distance', type=int, default=16, help='')  ##
-    parser.add_argument('height', type=int, default=100, help='height of image')
-    parser.add_argument('width', type=int, default=100, help='width of image')
-    parser.add_argument('save_path_stacked', type=str, default=os.path.join('..', 'results', 'stacked'),
-                        help='sets the path for saving results')
-    parser.add_argument('num_channels', type=int, default=0, help='number of channels in image')
-    parser.add_argument('num_dimensions', type=int, default=0, help='')  ##
-    parser.add_argument('num_elements_flat', type=int, default=0,
-                        help='size of image when flattened (=height*width)')
-    parser.add_argument('use_numpy_eigen_decompose', type=bool, default=True,
-                        help='if true use numpy\'s inbuilt function for finding eigen decomposition,'
-                             ' else use nystrom eigen decomposition')
-    parser.add_argument('dim_low', type=int, default=8, help='')  ##
-    parser.add_argument('color_weight_mode', type=int, default=0,
-                        help='0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG')
-    parser.add_argument('train_condition', type=bool, default=True,
-                        help='')  ##
-    parser.add_argument('val_condition', type=bool, default=True,
-                        help='')  ##
-    parser.add_argument('test_condition', type=bool, default=True,
-                        help='')  ##
-    parser.add_argument('save_stacked_title', type=bool, default=False,
-                        help='save stacked title if true')  ##
-    parser.add_argument('print_cluster_memberships', type=bool, default=False,
-                        help='if true print membership of each pixel')
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('seed', type=int, default=0, help='sets the seed for program')
+    # parser.add_argument('num_clusters', type=int, default=8, help='defines number of clusters')
+    # parser.add_argument('centroid_type', type=int, default=1,
+    #                     help='defines the type of cluster: 0 for mean, 1 for median')
+    # parser.add_argument('sigma_color', type=float, default=0.5, help='')  ##
+    # parser.add_argument('sigma_distance', type=int, default=16, help='')  ##
+    # parser.add_argument('height', type=int, default=100, help='height of image')
+    # parser.add_argument('width', type=int, default=100, help='width of image')
+    # parser.add_argument('save_path_stacked', type=str, default=os.path.join('..', 'results', 'stacked'),
+    #                     help='sets the path for saving results')
+    # parser.add_argument('num_channels', type=int, default=0, help='number of channels in image')
+    # parser.add_argument('num_dimensions', type=int, default=0, help='')  ##
+    # parser.add_argument('num_elements_flat', type=int, default=0,
+    #                     help='size of image when flattened (=height*width)')
+    # parser.add_argument('use_numpy_eigen_decompose', type=bool, default=True,
+    #                     help='if true use numpy\'s inbuilt function for finding eigen decomposition,'
+    #                          ' else use nystrom eigen decomposition')
+    # parser.add_argument('dim_low', type=int, default=8, help='')  ##
+    # parser.add_argument('color_weight_mode', type=int, default=0,
+    #                     help='0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG')
+    # parser.add_argument('train_condition', type=bool, default=True,
+    #                     help='')  ##
+    # parser.add_argument('val_condition', type=bool, default=True,
+    #                     help='')  ##
+    # parser.add_argument('test_condition', type=bool, default=True,
+    #                     help='')  ##
+    # parser.add_argument('save_stacked_title', type=bool, default=False,
+    #                     help='save stacked title if true')  ##
+    # parser.add_argument('print_cluster_memberships', type=bool, default=False,
+    #                     help='if true print membership of each pixel')
     # return parser
     # args = parser.parse_args()
     args = argparse.Namespace()
     args.seed = 0
     args.num_clusters = 8
+    args.dim_low = 8
     args.centroid_type = 1 # 0: mean, 1: median
-    args.sigma_color = 0.5 # 0.4
-    args.sigma_distance = 16 # 20
+    args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
+    args.sigma_color = 0.8 # 0.4, 0.5 BEST (RGB): 0.8 # increasing creates superpixels, decreasing increases detail
+    args.sigma_distance = 17 # 20, 16 BEST (RGB): 17# decreasing causes segments to be highly localized
     args.height = 100
     args.width = 100
     args.save_path_stacked = os.path.join('..', 'results', 'stacked')
@@ -56,8 +58,6 @@ def get_args():
     args.num_dimensions = 0
     args.num_elements_flat = 0
     args.use_numpy_eigen_decompose = True
-    args.dim_low = 8
-    args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG
     args.train_condition = True
     args.val_condition = True
     args.test_condition = True
