@@ -42,6 +42,7 @@ def get_args():
     parser.add_argument('print_cluster_memberships', type=bool, default=False,
                         help='if true print membership of each pixel')
     # return parser
+    # args = parser.parse_args()
     args = argparse.Namespace()
     args.seed = 0
     args.num_clusters = 8

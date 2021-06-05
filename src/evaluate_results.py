@@ -1,6 +1,8 @@
 import numpy as np
 import os
 import cv2
+import torch
+from evaluation_metrics import metrics_np
 import matplotlib.pyplot as plt
 
 def get_mean_absolute_error(image_a, image_b):
@@ -53,4 +55,12 @@ print(f'PSNR (-): {peak_signal_to_noise_ratio}')
 # plt.imshow(label_pred)
 # plt.show()
 
+
+
+
+y_true = np.expand_dims(np.transpose(label_gt, (2, 1, 0)), axis=0)
+y_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+
+print(f'IOU: {metrics_np(y_true, y_pred, metric_name="iou", metric_type="soft")}')
+print(f'Dice: {metrics_np(y_true, y_pred, metric_name="dice", metric_type="soft")}')
 
