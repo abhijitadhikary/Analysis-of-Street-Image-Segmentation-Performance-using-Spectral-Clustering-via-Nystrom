@@ -234,7 +234,7 @@ def run_evaluation(mode, use_color_eval=False):
     pri_list = []
     voi_list = []
     gce_list = []
-    print(f'Running evaluation for mode {mode.upper()} .....')
+    print(f'Running evaluation metrics in mode {mode.upper()} .....')
     for index_filename, curent_filename in tqdm(enumerate(filename_list), leave=True, total=len(filename_list)):
         image_path_full = os.path.join(path_stacked, curent_filename)
         try:
@@ -280,22 +280,27 @@ def run_evaluation(mode, use_color_eval=False):
 
 
         mean_absolute_error = get_mean_absolute_error(label_gt, label_pred)
+        mae_list.append(mean_absolute_error)
+
         peak_signal_to_noise_ratio = get_peak_signal_to_noise_ratio(label_gt, label_pred)
+        psnr_list.append(peak_signal_to_noise_ratio)
+
         intersection_over_union = metrics_np(label_gt, label_pred, metric_name="iou", metric_type="soft")
+        iou_list.append(intersection_over_union)
+
         dice_score = metrics_np(label_gt, label_pred, metric_name="dice", metric_type="soft")
+        dice_list.append(dice_score)
+
         probabilistic_rand_index = get_PRI_score(label_gt, label_pred)
+        pri_list.append(probabilistic_rand_index)
+
         gce_score = get_gce_score(label_gt, label_pred)
+        gce_list.append(gce_score)
 
         # takes a long time to run
-        variation_of_information = get_voi_score(label_gt, label_pred)
+        # variation_of_information = get_voi_score(label_gt, label_pred)
+        # voi_list.append(variation_of_information)
 
-        mae_list.append(mean_absolute_error)
-        psnr_list.append(peak_signal_to_noise_ratio)
-        iou_list.append(intersection_over_union)
-        dice_list.append(dice_score)
-        pri_list.append(probabilistic_rand_index)
-        voi_list.append(variation_of_information)
-        gce_list.append(gce_score)
 
     if len(mae_list) == 0:
         print(f'Exiting evaluation. No compatible files found to run evaluation metrics in {path_stacked}')
