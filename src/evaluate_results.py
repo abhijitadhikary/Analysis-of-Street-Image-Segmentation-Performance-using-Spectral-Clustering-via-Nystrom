@@ -26,11 +26,19 @@ image = image_stacked[:, :width]
 label_gt = image_stacked[:, width:width*2]
 label_pred = image_stacked[:, width*2:]
 
+# convert to batch_size x num_channels x width x height
+label_gt = np.expand_dims(np.transpose(label_gt, (2, 1, 0)), axis=0)
+label_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
+
 mean_absolute_error = get_mean_absolute_error(label_gt, label_pred)
 peak_signal_to_noise_ratio = get_peak_signal_to_noise_ratio(label_gt, label_pred)
+intersection_over_union = metrics_np(label_gt, label_pred, metric_name="iou", metric_type="soft")
+dice = metrics_np(label_gt, label_pred, metric_name="dice", metric_type="soft")
+
 print(f'MAE (-): {mean_absolute_error}')
 print(f'PSNR (-): {peak_signal_to_noise_ratio}')
-
+print(f'IOU: {intersection_over_union}')
+print(f'Dice: {dice}')
 
 
 # n = image
@@ -58,9 +66,5 @@ print(f'PSNR (-): {peak_signal_to_noise_ratio}')
 
 
 
-y_true = np.expand_dims(np.transpose(label_gt, (2, 1, 0)), axis=0)
-y_pred = np.expand_dims(np.transpose(label_pred, (2, 1, 0)), axis=0)
 
-print(f'IOU: {metrics_np(y_true, y_pred, metric_name="iou", metric_type="soft")}')
-print(f'Dice: {metrics_np(y_true, y_pred, metric_name="dice", metric_type="soft")}')
 
