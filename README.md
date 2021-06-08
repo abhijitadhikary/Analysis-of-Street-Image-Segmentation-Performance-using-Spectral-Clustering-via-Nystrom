@@ -24,7 +24,7 @@ and the ground truth labels. ***
 │       |───── train
 │       |───── val
 │       └───── test
-├── results                 <- contains information about different metrics in different modes
+├── results                 <- contains results about different metrics in different modes
 ├── documents
 │   ├── docs
 │   └── references
