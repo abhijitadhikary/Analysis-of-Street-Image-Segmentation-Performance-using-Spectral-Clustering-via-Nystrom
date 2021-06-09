@@ -1,5 +1,7 @@
 import numpy as np
-
+'''
+    Most of the functions in this file is directly re-used from CLAB3
+'''
 def run_kmeans(eigen_vecs_k, args, n_iterations=50, eps=1e-7):
     '''
         k-means++ algorithm

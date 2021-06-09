@@ -10,61 +10,29 @@ def get_args():
     Returns all the hyper-parameters
     :return args: the hyper-parameters
     '''
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('seed', type=int, default=0, help='sets the seed for program')
-    # parser.add_argument('num_clusters', type=int, default=8, help='defines number of clusters')
-    # parser.add_argument('centroid_type', type=int, default=1,
-    #                     help='defines the type of cluster: 0 for mean, 1 for median')
-    # parser.add_argument('sigma_color', type=float, default=0.5, help='')  ##
-    # parser.add_argument('sigma_distance', type=int, default=16, help='')  ##
-    # parser.add_argument('height', type=int, default=100, help='height of image')
-    # parser.add_argument('width', type=int, default=100, help='width of image')
-    # parser.add_argument('save_path_stacked', type=str, default=os.path.join('..', 'results', 'stacked'),
-    #                     help='sets the path for saving results')
-    # parser.add_argument('num_channels', type=int, default=0, help='number of channels in image')
-    # parser.add_argument('num_dimensions', type=int, default=0, help='')  ##
-    # parser.add_argument('num_elements_flat', type=int, default=0,
-    #                     help='size of image when flattened (=height*width)')
-    # parser.add_argument('use_numpy_eigen_decompose', type=bool, default=True,
-    #                     help='if true use numpy\'s inbuilt function for finding eigen decomposition,'
-    #                          ' else use nystrom eigen decomposition')
-    # parser.add_argument('dim_low', type=int, default=8, help='')  ##
-    # parser.add_argument('color_weight_mode', type=int, default=0,
-    #                     help='0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG')
-    # parser.add_argument('train_condition', type=bool, default=True,
-    #                     help='')  ##
-    # parser.add_argument('val_condition', type=bool, default=True,
-    #                     help='')  ##
-    # parser.add_argument('test_condition', type=bool, default=True,
-    #                     help='')  ##
-    # parser.add_argument('save_stacked_title', type=bool, default=False,
-    #                     help='save stacked title if true')  ##
-    # parser.add_argument('print_cluster_memberships', type=bool, default=False,
-    #                     help='if true print membership of each pixel')
-    # return parser
-    # args = parser.parse_args()
-    args = argparse.Namespace()
-    args.seed = 0 # seed for numpy
-    args.num_clusters = 8 # desired number of image clusters
-    args.dim_low = 8 # number of randomly chosen rows to run Nystrom
-    args.segmentation_mode = 0 # 0: Spectral, 1: K-Means++, 2: GMM (Very Slow)
-    args.centroid_type = 1 # 0: mean, 1: median
-    args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG (Not implemented)
-    args.sigma_color = 0.8 # BEST: 0.8 (RGB), 0.8 (HSV) # increasing creates superpixels, decreasing increases detail
-    args.sigma_distance = 17 # BEST (RGB): 17, 18 (HSV) # decreasing causes segments to be highly localized
-    args.height = 100 # height of the image, initialized to 100, updated later according to the actual image size
-    args.width = 100 # width of the image, initialized to 100, updated later according to the actual image size
-    args.save_path_stacked = os.path.join('..', 'results', 'stacked') # path to save stacked images
-    args.num_channels = 0 # number of channels of the image, initialized to 0, updated according to the image
-    args.num_dimensions = 0 # number of dimensions of the image, initialized to 0, updated according to the image
-    args.num_elements_flat = 0 # shape of flattened image, initialized to 0, updated according to the image
-    args.use_numpy_eigen_decompose = True # whether to use numpy's built-in eigen decomposition method
-    args.train_condition = True # whether to train
-    args.val_condition = True # whether to validate
-    args.test_condition = True # whether to test
-    args.save_stacked_title = False # whether to save title in the saved image
-    args.print_cluster_memberships = False  # whether to print how many members belong to each classs
-    args.run_evaluation_metric = True # whether to run evaluation after train/val/test
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--seed', type=int, default=0, help='sets the seed for numpy')
+    parser.add_argument('--num_clusters', type=int, default=8, help='desired number of image clusters')
+    parser.add_argument('--dim_low', type=int, default=8, help='number of randomly chosen rows to run Nystrom')
+    parser.add_argument('--segmentation_mode', type=int, default=0, help='0: Spectral, 1: K-Means++, 2: GMM (Very Slow)')
+    parser.add_argument('--centroid_type', type=int, default=1, help='0: mean, 1: median')
+    parser.add_argument('--color_weight_mode', type=int, default=0, help='0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG (Not implemented)')
+    parser.add_argument('--sigma_color', type=float, default=0.8, help='BEST: 0.8 (RGB), 0.8 (HSV)') # increasing creates superpixels, decreasing increases detail
+    parser.add_argument('--sigma_distance', type=float, default=17, help='BEST (RGB): 17, 18 (HSV)') # decreasing causes segments to be highly localized
+    parser.add_argument('--height', type=int, default=100, help='change height of the image, initialized to 100, updated later according to the actual image size')
+    parser.add_argument('--width', type=int, default=100, help='change width of the image, initialized to 100, updated later according to the actual image size')
+    parser.add_argument('--save_path_stacked', type=str, default=os.path.join('..', 'results', 'stacked'), help='path to save stacked images')
+    parser.add_argument('--num_channels', type=int, default=0, help='number of channels of the image, initialized to 0, updated according to the image')
+    parser.add_argument('--num_dimensions', type=int, default=0, help='number of dimensions of the image, initialized to 0, updated according to the image')
+    parser.add_argument('--num_elements_flat', type=int, default=0, help='shape of flattened image, initialized to 0, updated according to the image')
+    parser.add_argument('--train_condition', type=bool, default=True, help='whether to train')
+    parser.add_argument('--val_condition', type=bool, default=True, help='whether to validate')
+    parser.add_argument('--test_condition', type=bool, default=True, help='whether to test')
+    parser.add_argument('--save_stacked_title', type=bool, default=False, help='whether to save title in the saved image')
+    parser.add_argument('--print_cluster_memberships', type=bool, default=False, help='whether to print how many members belong to each classs')
+    parser.add_argument('--run_evaluation_metric', type=bool, default=False, help='whether to run evaluation after train/val/test')
+    parser.add_argument('--print_duration_information', type=bool, default=True, help='whether to print time duration information')
+    args = parser.parse_args()
     return args
 
 def setup_model_parameters():
@@ -81,6 +49,7 @@ def setup_model_parameters():
     # unzip the iid dataset if it hasn't already been unzipped
     unzip_dataset()
     print('Model parameters successfully set up.')
+    print_model_parameters(args)
     return args
 
 def create_dirs():
@@ -319,3 +288,31 @@ def save_image(image, image_path_full, title=None):
         image = image.astype(np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(image_path_full, image)
+
+def print_duration_information(duration_list, mode):
+    num_images = len(duration_list)
+    duration_list = np.array(duration_list)
+    duration_mean = np.mean(duration_list)
+    duration_sum = np.sum(duration_list)
+    print(f'Mode: {mode.upper()}\t\tTotal samples: {num_images}\t\tTotal Duration: {duration_sum:.4f} s\t\tMean Duration: {duration_mean:.4f} s')
+
+def print_model_parameters(args):
+    print(f'{"*"*57}')
+    print(f'{"*"*20} Model Parameters {"*"*20}')
+    print(f'{"*"*57}')
+    method_list = ['Spectral', 'K-Means++', 'GMM']
+    print(f'Segmentation Method:\t\t\t{method_list[args.segmentation_mode]}')
+    print(f'Number of clusters:\t\t\t\t{args.num_clusters}')
+    if args.segmentation_mode == 0:
+        color_mode_list = ['RGB', 'Constant (1)', 'DOOG', 'HSV']
+        print(f'Color mode:\t\t\t\t\t\t{color_mode_list[args.color_weight_mode]}')
+        print(f'Sigma color:\t\t\t\t\t{args.sigma_color}')
+        print(f'Sigma distance:\t\t\t\t\t{args.sigma_distance}')
+        print(f'Nystrom (n):\t\t\t\t\t{args.sigma_distance}')
+
+    centroid_list = ['Mean', 'Median']
+    print(f'Centroid type:\t\t\t\t\t{centroid_list[args.centroid_type]}')
+
+    print(f'{"*"*57}')
+
+
