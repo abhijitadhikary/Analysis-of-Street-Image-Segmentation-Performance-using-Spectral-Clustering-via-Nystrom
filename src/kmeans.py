@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.cluster import KMeans
-
+'''
+    Most of the functions in this file is directly re-used from CLAB3
+'''
 def run_kmeans_sklearn(eigen_vecs_k, args):
     '''
     sk-learn k-means clustering

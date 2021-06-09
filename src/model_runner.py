@@ -1,5 +1,7 @@
-from utils import print_cluster_memberships, get_segmented_image, get_stacked_image_horizontal, save_image
+from utils import process_image_attributes, get_image_array, print_cluster_memberships, get_segmented_image, get_stacked_image_horizontal, save_image
 from spectral_clustering import run_spectral_clustering
+from kmeans import run_kmeans
+from gmm import run_gmm
 from evaluation_metrics import run_evaluation
 import os
 from tqdm import tqdm
@@ -33,8 +35,25 @@ def run(dataset, args, mode=None):
         #     continue
 
         image = image_array[image_index]
-        # cluster the image using Spectral Clustering
-        clustered_image = run_spectral_clustering(image, args)
+
+        if args.segmentation_mode == 0:
+            # cluster the image using Spectral Clustering
+            clustered_image = run_spectral_clustering(image, args)
+        elif args.segmentation_mode == 1:
+            # cluster the image using K-Means++
+            image_scaled, args = process_image_attributes(image, args)
+            image_scaled = image_scaled.reshape(image.shape[0] * image.shape[1], -1)
+            clustered_image, _ = run_kmeans(image_scaled, args)
+            clustered_image = clustered_image.reshape(args.height, args.width)
+        elif args.segmentation_mode == 2:
+            # cluster the image using GMM
+            image_scaled, args = process_image_attributes(image, args)
+            image_scaled = image_scaled.reshape(image.shape[0] * image.shape[1], -1)
+            clustered_image = run_gmm(image_scaled, args)
+            clustered_image = clustered_image.reshape(args.height, args.width)
+        else:
+            raise NotImplementedError('Please select a valud clustering method [0: Spectral, 1: K-Means++, 2: GMM]')
+
         # segment the image according to cluster mean/medians color values
         segmented_image_pred = get_segmented_image(image, clustered_image.reshape(-1), args)
 

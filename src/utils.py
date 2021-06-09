@@ -44,26 +44,27 @@ def get_args():
     # return parser
     # args = parser.parse_args()
     args = argparse.Namespace()
-    args.seed = 0
-    args.num_clusters = 8
-    args.dim_low = 8
+    args.seed = 0 # seed for numpy
+    args.num_clusters = 8 # desired number of image clusters
+    args.dim_low = 8 # number of randomly chosen rows to run Nystrom
+    args.segmentation_mode = 0 # 0: Spectral, 1: K-Means++, 2: GMM (Very Slow)
     args.centroid_type = 1 # 0: mean, 1: median
     args.color_weight_mode = 0 # 0: RGB Intensity, 1: constant(1), 2: HSV, 1: DOOG (Not implemented)
     args.sigma_color = 0.8 # BEST: 0.8 (RGB), 0.8 (HSV) # increasing creates superpixels, decreasing increases detail
     args.sigma_distance = 17 # BEST (RGB): 17, 18 (HSV) # decreasing causes segments to be highly localized
-    args.height = 100
-    args.width = 100
-    args.save_path_stacked = os.path.join('..', 'results', 'stacked')
-    args.num_channels = 0
-    args.num_dimensions = 0
-    args.num_elements_flat = 0
-    args.use_numpy_eigen_decompose = True
-    args.train_condition = True
-    args.val_condition = True
-    args.test_condition = True
-    args.save_stacked_title = False
-    args.print_cluster_memberships = False
-    args.run_evaluation_metric = True
+    args.height = 100 # height of the image, initialized to 100, updated later according to the actual image size
+    args.width = 100 # width of the image, initialized to 100, updated later according to the actual image size
+    args.save_path_stacked = os.path.join('..', 'results', 'stacked') # path to save stacked images
+    args.num_channels = 0 # number of channels of the image, initialized to 0, updated according to the image
+    args.num_dimensions = 0 # number of dimensions of the image, initialized to 0, updated according to the image
+    args.num_elements_flat = 0 # shape of flattened image, initialized to 0, updated according to the image
+    args.use_numpy_eigen_decompose = True # whether to use numpy's built-in eigen decomposition method
+    args.train_condition = True # whether to train
+    args.val_condition = True # whether to validate
+    args.test_condition = True # whether to test
+    args.save_stacked_title = False # whether to save title in the saved image
+    args.print_cluster_memberships = False  # whether to print how many members belong to each classs
+    args.run_evaluation_metric = True # whether to run evaluation after train/val/test
     return args
 
 def setup_model_parameters():
