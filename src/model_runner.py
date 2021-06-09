@@ -28,8 +28,10 @@ def run(dataset, args, mode=None):
     # list to keep track of the length of each iteration
     duration_list = []
     for image_index in tqdm(range(num_images), leave=True):
-        if image_index == 100:
-            break
+        # early break
+        # if image_index == 100:
+        #     break
+
         # uncomment the following to only visualize the selected images in the paper, validation
         # if not image_index in [18, 107, 120, 125, 192]:
         #     continue
