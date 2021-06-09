@@ -1,26 +1,4 @@
 import numpy as np
-from sklearn.cluster import KMeans
-'''
-    Most of the functions in this file is directly re-used from CLAB3
-'''
-def run_kmeans_sklearn(eigen_vecs_k, args):
-    '''
-    sk-learn k-means clustering
-    :param eigen_vecs_k: np.ndarray of shape [no_data, no_dimensions]
-                       input data points
-    :param args: arguments for number of clusters
-    :return clustered_labels: np.ndarray of shape [no_data] and integer data type
-                            contains values in [0, k-1] indicating which
-                            cluster each data point belongs to
-    '''
-    kmeans = KMeans(n_clusters=args.num_clusters, random_state=0).fit(eigen_vecs_k)
-    clustered_labels = kmeans.labels_
-
-    unique, counts = np.unique(clustered_labels, return_counts=True)
-    print(f'After K-Means\n{dict(zip(unique, counts))}')
-
-    return clustered_labels
-
 
 def run_kmeans(eigen_vecs_k, args, n_iterations=50, eps=1e-7):
     '''

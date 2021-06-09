@@ -159,7 +159,6 @@ def run_spectral_clustering(image_real, args):
     :param args: the arguments with the hyper-parameters
     :return clustered_image: The clustered image of shape [height, width, num_channels]
     '''
-    # start = time()
     image_scaled, args = process_image_attributes(image_real, args)
     image_array = get_image_array(image_scaled, args)
 
